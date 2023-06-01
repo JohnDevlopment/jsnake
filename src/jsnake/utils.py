@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from .error import ConstantError
+from .errors import ConstantError
 import os
 
 if TYPE_CHECKING:

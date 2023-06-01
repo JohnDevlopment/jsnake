@@ -3,18 +3,24 @@ requires = ["flit_core>=3.4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "snek"
+name = "jsnake"
 dynamic = ["version"]
-description = "General Python utilities"
-requires-python = ">=3.10"
+description = "Boost-like Python package"
+requires-python = ">=3.9"
 license.file = "LICENSE"
 authors = [
     { name = "John Russell", email = "johndevlopment7@gmail.com" }
 ]
-classifiers = []
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
 
-# [project.optional-dependencies]
-# test = ["pytest", "pytest-cov"]
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov"]
 
 [tool.flit.module]
-name = "snek"
+name = "jsnake"

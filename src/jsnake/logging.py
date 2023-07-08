@@ -65,10 +65,16 @@ def init(name: str):
     This MUST be called before any other function in this module.
     """
     global _rootLogger, _initialized
+
+    # Get default level
     global DEFAULT_LEVEL
     DEFAULT_LEVEL = _get_default_level()
+
+    # Set flag
     _initialized = True
-    _rootLogger = get_logger(name, stream=False)
+
+    # Create root logger
+    _rootLogger = logging.getLogger(name)
     add_handler(_rootLogger, 'null')
 
 @overload
@@ -151,24 +157,33 @@ def get_logger(name: str="", level: Level | None=None, stream: bool=True) -> Log
     isroot = parts[0] == "" and len(parts) == 1
     if isroot: return _rootLogger
 
-    if parts[0] not in ("", "yt_dlp_tk"):
-        parts.insert(0, "yt_dlp_tk")
-
+    # Insert root name into the array
+    root_name = _rootLogger.name
+    if parts[0] not in ("", root_name):
+        parts.insert(0, root_name)
     if parts[0] == "":
-        parts[0] = "yt_dlp_tk"
+        parts[0] = root_name
 
+    # Join list into a string
     name = ".".join(parts)
 
+    # Return the cached logger
     if name in _cache:
         return _cache[name]
 
+    # Default logger
     if level is None:
         level = DEFAULT_LEVEL
 
+    # Get the logger and set its level
     logger = logging.getLogger(name)
     logger.setLevel(level)
+
+    # Add stream handler
     if stream: # pragma: no cover
         add_handler(logger, 'stream')
 
+    # Cache the logger for future calls
     _cache[name] = logger
+
     return logger

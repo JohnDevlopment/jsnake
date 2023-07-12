@@ -6,6 +6,7 @@ build-backend = "flit_core.buildapi"
 name = "jsnake"
 dynamic = ["version"]
 description = "Boost-like Python package"
+readme = "README.md"
 requires-python = ">=3.9"
 license.file = "LICENSE"
 authors = [

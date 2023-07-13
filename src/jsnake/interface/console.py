@@ -68,6 +68,9 @@ class ConsoleWindow(Toplevel):
         self.wm_withdraw()
         self.on_close.emit()
 
+    def flush(self) -> None:
+        pass
+
     def _write_log_msg(self, prefix: str, msg: str, *args: Any):
         try:
             msg = msg % args

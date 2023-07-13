@@ -1,7 +1,7 @@
 """Display a toplevel window with a console."""
 
 from __future__ import annotations
-from . import ExText
+from .widgets import ExText
 from .utils import InState
 from ..logging import get_logger, add_handler
 from ..signals import signal

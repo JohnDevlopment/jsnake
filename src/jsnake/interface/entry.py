@@ -33,6 +33,10 @@ class ExEntry(ttk.Entry, _WidgetMixin):
                 The 'text' parameter has changed. Provides
                 the new string for the label.
 
+            clearbutton_changed(enabled: bool)
+                The 'clearbutton' parameter has changed.
+                Provides the enabled status of the button.
+
             text_changed(new_text: str)
                 The text inside the entry has changed. Provides
                 the updated content.

@@ -84,8 +84,8 @@ class ExEntry(ttk.Entry, _WidgetMixin):
         # Custom resources
         self.set_custom_resources(scrollx=scrollx, text=text, clearbutton=clearbutton)
 
-        self.pack(side=tk.LEFT)
-        # self.place(x=0, y=0, relwidth=.75)
+        # Pack the entry
+        self.grid(row=0, column=1)
 
         # Emit signals so that the program can react to the initialized options
         self.on_x_scrollbar_changed.emit(scrollx)
@@ -132,38 +132,53 @@ class ExEntry(ttk.Entry, _WidgetMixin):
             case 'x_scrollbar_changed':
                 scrollx: bool = args[0]
                 if scrollx:
-                    self.xbar.pack(side=tk.BOTTOM, fill=tk.X)
+                    if not self.xbar.winfo_ismapped():
+                        # Map the scrollbar if it isn't already
+                        self.xbar.grid(row=1, column=1, sticky='ew')
                 else:
-                    self.xbar.pack_forget()
+                    if self.xbar.winfo_ismapped():
+                        # The scrollbar is visible, so unmap it
+                        self.xbar.grid_forget()
 
             case 'label_changed':
                 text: str = args[0]
                 label = self.label
                 if text:
-                    kw = {}
                     if not label.winfo_ismapped():
-                        if self.frame.winfo_ismapped():
-                            kw['before'] = self.entry_name
-                        label.pack(**kw)
+                        # Map the label if it isn't already visible
+                        self.label.grid(row=0, column=0)
+
+                    # Configure the text
                     label.configure(text=text)
                 else:
                     if label.winfo_ismapped():
-                        label.pack_forget()
+                        # The label is visible, so unmap it
+                        label.grid_forget()
 
             case 'clearbutton_changed':
-                enabled: bool = args[0]
+                # The 'clearbutton' option has been configured
                 clearbutton = self.clearbutton
+
+                enabled: bool = args[0]
                 if enabled:
-                    clearbutton.pack(side=tk.RIGHT)
+                    if not clearbutton.winfo_ismapped():
+                        # Map the button if it's invisible
+                        clearbutton.grid(row=0, column=2)
                 else:
-                    clearbutton.place_forget()
+                    if clearbutton.winfo_ismapped():
+                        # Unmap the visible button
+                        clearbutton.grid_forget()
 
             case 'text_changed':
+                # The text inside the entry has changed
                 new_text: str = args[0]
+
+                # Enable the 'clear' button if there's text, otherwise disable it
                 new_state = ("!disabled",) if new_text else ("disabled",)
                 self.clearbutton.state(new_state)
 
             case _:
+                # Invalid signal, therefore raise exception
                 raise InvalidSignalError(sig)
 
     def __validate_entry(self,

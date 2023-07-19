@@ -1,13 +1,13 @@
 # Utility functions and classes.
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, Literal
 from .errors import ConstantError
 from dataclasses import dataclass
 import os, re
 
 if TYPE_CHECKING:
-    from typing import Any, Literal
+    from typing import Any
 
 @dataclass
 class Filesize:

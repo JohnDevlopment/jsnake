@@ -110,7 +110,7 @@ class Filesize:
 
         return cls(round(value, 2), suffixes[i], raw_size, approximate)
 
-class attr_dict(dict):
+class attr_dict(dict[str, Any]):
     """A dictionary that supports attribute notation."""
 
     def __getattr__(self, key: str) -> Any:

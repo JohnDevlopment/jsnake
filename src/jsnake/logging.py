@@ -192,3 +192,28 @@ def get_logger(name: str="", level: Level | None=None, stream: bool=True):
     _cache[name] = logger
 
     return logger
+
+if __debug__:
+    import unittest, tempfile
+    from pathlib import Path
+
+    class TestLogging(unittest.TestCase):
+        def test_logger(self):
+            init("logging")
+
+            logger = get_logger('test1', Level.INFO)
+            with self.assertLogs(logger, Level.INFO) as cm:
+                logger.info("first message")
+
+            logger = get_logger('test1.bar', stream=False)
+            with self.assertLogs(logger, Level.INFO) as cm:
+                logger.info("second message")
+
+            with tempfile.TemporaryDirectory() as tmpdir:
+                file_path = Path(tmpdir) / "asfsdf.log"
+                add_handler(logger, 'file', file=str(file_path))
+                with self.assertLogs(logger, Level.INFO) as cm:
+                    logger.info("third message")
+
+    if __name__ == "__main__":
+        unittest.main()

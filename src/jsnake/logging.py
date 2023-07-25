@@ -1,12 +1,8 @@
 """Logging module."""
 from __future__ import annotations
-from typing import TYPE_CHECKING, Protocol, overload
 from .utils import get_env
 from enum import IntEnum
 import logging
-
-if TYPE_CHECKING:
-    from typing import Literal, Any
 
 class LoggingError(Exception):
     """Logging error."""
@@ -21,21 +17,17 @@ class Level(IntEnum):
     CRITICAL = logging.CRITICAL
 
     @classmethod
-    def find_by_keyword(cls, key: str) -> Level | None:
-        """Locate the enumeration based on KEY."""
+    def find_by_keyword(cls, key: str):
+        """
+        Do a keyword lookup of the enum.
+
+        :param str key: A key used to search the enum. Should
+                        be one of the defined members
+        """
         return cls.__members__.get(key)
 
-class _TextWriteIO(Protocol):
-    """Supports standard text IO operations."""
-
-    def write(self, text: str, /): ...
-
-    def flush(self): ...
-
-    def close(self) -> None: ...
-
 def _get_default_level(envname: str) -> Level:
-    level: Any = get_env(envname)
+    level = get_env(envname)
     if level is not None:
         try:
             ilevel = int(level)
@@ -58,7 +50,7 @@ _rootLogger: Logger
 _cache: dict[str, Logger] = {}
 _initialized = False
 
-def init(name: str, envprefix: str="JSNAKE") -> None:
+def init(name: str, envprefix: str="JSNAKE"):
     """
     Initialize the logging hiererchy.
 
@@ -86,38 +78,34 @@ def init(name: str, envprefix: str="JSNAKE") -> None:
     _rootLogger = logging.getLogger(name)
     add_handler(_rootLogger, 'null')
 
-@overload
-def add_handler(logger: Logger, kind: Literal['stream'], *, stream: _TextWriteIO | None=None):
-    ...
-
-@overload
-def add_handler(logger: Logger, kind: Literal['file'], *, file: str, mode: str='wt'):
-    ...
-
-@overload
-def add_handler(logger: Logger, kind: Literal['null']):
-    ...
-
-def add_handler(logger: Logger, kind: str, **kw: Any):
+def add_handler(logger: Logger, kind: str, **kw):
     """
-    Add the specified type of handler to LOGGER.
+    Add the specified type of handler to a logger.
 
-    The keyword arguments depend on what KIND of handler to add.
+    :params str kind: The kind of handler to add. Can be stream,
+                      file, or null
 
-    stream:
-      * stream = the stream to output to. should be derived from IO.
-                 if omitted, defaults to sys.stderr
+    :param kw: Keyword arguments which differ based on `kind`
+    :type kw: dict[str, Any]
 
-    file:
-      * mode = same as the mode argument in open() (default: 'wt')
-      * encoding = same as the encoding argumet in open()
-      * file = the name of the file
+    :raises LoggingError: If the logging module has not been initialized, or
+                          if `kind` is invalid
 
-    stack:
-      * limit = size limit for the record stack
+    .. note:: Keyword arguments
 
-    null:
-      none
+       The keyword arguments depend on what `kind` of handler to add.
+
+       stream:
+         * stream = the stream to output to. Should be derived from IO.
+                    If omitted, defaults to ``sys.stderr``
+
+       file:
+         * mode = same as the mode argument in open() (default: 'wt')
+         * encoding = same as the encoding argumet in open()
+         * file = the name of the file
+
+       null:
+         none
     """
     if not _initialized:
         raise LoggingError("You must call init() before using any of the other functions.")
@@ -135,26 +123,34 @@ def add_handler(logger: Logger, kind: str, **kw: Any):
     elif kind == 'null':
         hdl = logging.NullHandler(logger.level)
 
-    assert hdl is not None
+    if hdl is None:
+        raise LoggingError(f"Invalid handler type '{kind}'.")
+
     logger.addHandler(hdl)
 
-def get_logger(name: str="", level: Level | None=None, stream: bool=True) -> Logger:
+def get_logger(name: str="", level: Level | None=None, stream: bool=True):
     """
-    Returns a logger with the specified NAME.
+    Returns a logger with the specified name.
 
-    If NAME is omitted or set to an empty string,
-    the root logger for this library is returned.
+    :param str name: The name of the logger
 
-    Any logger returned by this is part of the
-    logger hierchy. That is to say, a logger named
-    `io` is a direct child of the root logger. And
-    `io.read` is a direct descendent of `io`, which
-    is a descendent of the root logger.
+    :param level: Severity level of the returned logger
+    :type level: Level or None
 
-    The LEVEL dictates the severity level
-    of the logger. Unless it is specified,
-    it defaults to the value of SNEK_LEVEL
-    if defined, or Level.INFO otherwise.
+    :param bool stream: If true, add a stream handler that
+                        lets the logger print to the screen
+
+    :return: a logger for `name`, unless `name` is empty,
+             in which case the root logger
+    :rtype: Logger
+
+    .. note::
+
+       Any logger returned by this is part of the
+       logger hierchy. That is to say, a logger named
+       `io` is a direct child of the root logger. And
+       `io.read` is a direct descendent of `io`, which
+       is a descendent of the root logger.
     """
     global _cache
 

@@ -1,13 +1,13 @@
 # Utility functions and classes.
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, cast, Literal
+from typing import TYPE_CHECKING, cast, Literal, Any
 from .errors import ConstantError
 from dataclasses import dataclass
 import os, re
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, NoReturn
     from typing_extensions import Self
 
 @dataclass
@@ -119,10 +119,10 @@ class attr_dict(dict):
     def __setattr__(self, key: str, value) -> None:
         self[key] = value
 
-class readonly_dict(dict):
+class readonly_dict(dict[str, Any]):
     """A dictionary whose values cannot be changed."""
 
-    def __setitem__(self, key, value): # pyright: ignore
+    def __setitem__(self, key, value) -> NoReturn: # pyright: ignore
         raise ConstantError(f"cannot assign elements to {type(self).__name__}")
 
 def get_env(envname: str) -> str | None:

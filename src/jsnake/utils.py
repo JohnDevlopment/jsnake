@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast, Literal, Any
 from .errors import ConstantError
 from dataclasses import dataclass
-import os, re
+import os, re, unittest
 
 if TYPE_CHECKING:
     from typing import Any, NoReturn
@@ -129,3 +129,33 @@ def get_env(envname: str) -> str | None:
     """Get an environment variable, return None if it doesn't exist."""
     temp = os.getenv(envname)
     return temp
+
+class TestClasses(unittest.TestCase):
+    def test_attr_dict(self):
+        d = attr_dict()
+
+        d['one'] = 1
+        self.assertEqual(d['one'], 1)
+        self.assertEqual(d['one'], d.one)
+
+        d.two = 2
+        self.assertEqual(d.two, 2)
+        self.assertEqual(d.two, d['two'])
+
+    def test_readonly_dict(self):
+        d = readonly_dict(one=1, two=2)
+        with self.assertRaises(ConstantError):
+            d['three'] = 3
+
+    def test_Filesize(self):
+        fs = Filesize(1, 'kb', 1024, False)
+        self.assertEqual(str(fs), "1.0 kb")
+
+        fs = Filesize.from_string("1 kb")
+        self.assertEqual(str(fs), "1.0 kb")
+
+        fs = Filesize.from_value(1073741824)
+        self.assertEqual(str(fs), "1.0 gb")
+
+if __name__ == "__main__":
+    unittest.main()

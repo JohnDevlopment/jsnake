@@ -8,6 +8,7 @@ import os, re
 
 if TYPE_CHECKING:
     from typing import Any
+    from typing_extensions import Self
 
 @dataclass
 class Filesize:
@@ -25,26 +26,54 @@ class Filesize:
             " " + self.unit
         )
 
-    def __add__(self, other: Filesize, /):
+    def __post_init__(self):
+        if isinstance(self.size, int):
+            # Convert integer to float
+            self.size = float(self.size)
+
+        if isinstance(self.raw_byte_size, int):
+            # Convert integer to float
+            self.raw_byte_size = float(self.raw_byte_size)
+
+    def __add__(self, other: Filesize, /) -> Self:
         raw_size = other.raw_byte_size + self.raw_byte_size
         return self.from_value(raw_size)
 
     @classmethod
-    def from_string(cls, string: str):
-        """Return a Filesize by converting STRING."""
+    def from_string(cls, string: str) -> Self:
+        """
+        Parse a string expressing a file size.
+
+        :param str string: A string consisting of a number
+                           followed by a size unit. The format is
+                           a valid integer with one or more digits,
+                           followed by zero or more spaces, and a
+                           unit consisting of b, k, m, and g.
+                           K, m, and g can be captialized and followed
+                           by an optional 'b' (e.g., kb, Mb, g, etc.).
+
+        :return: An object representing the size denoting in `string`.
+        :rtype: Filesize
+        """
+        # Regexp: Parse one or more numbers followed by optional
+        # whitespace and a suffix composed of any one of the letters
+        # m, M, g, G, k, or K, followed by an optional b.
         m = re.search(r'([1-9][0-9]*)\s*([mMgGkK]b?)', string)
-        assert m is not None
+        if m is None:
+            raise ValueError("")
         num, unit =  m.group(1, 2)
 
+        # Add a 'b' if it's missing
         if not (unit := unit.lower()).endswith('b'):
-            # logging.info("Filesize missing suffix 'b', added.")
             unit += "b"
 
         assert isinstance(unit, str)
         assert unit in ['b', 'kb', 'mb', 'gb']
 
+        # Type checker conversion
         unit = cast(Literal['b', 'kb', 'mb', 'gb'], unit)
 
+        # Mapping of multipliers
         multipliers = {
             'b': 1.0,
             'kb': 1024.0,
@@ -52,6 +81,7 @@ class Filesize:
             'gb': 1073741824.0
         }
 
+        # Construct class
         return cls(
             float(num),
             unit,
@@ -60,12 +90,21 @@ class Filesize:
         )
 
     @classmethod
-    def from_value(cls, value: float, approximate: bool=False) -> Filesize:
-        """Return a Filesize by converting VALUE bytes."""
+    def from_value(cls, value: float, approximate: bool=False) -> Self:
+        """
+        Return a ``Filesize`` representing a the specified size.
+
+        :param float value: A number representing a file size in bytes.
+
+        :param bool approximate: Whether the size is approximate.
+
+        :return: The object representation of `value`.
+        :rtype: Filesize
+        """
         raw_size = value
         suffixes = ('b', 'kb', 'mb', 'gb')
         i = 0
-        while value > 1024.0:
+        while value >= 1024.0:
             value /= 1024.0
             i += 1
 

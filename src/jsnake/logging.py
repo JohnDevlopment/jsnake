@@ -34,8 +34,8 @@ class _TextWriteIO(Protocol):
 
     def close(self) -> None: ...
 
-def _get_default_level() -> Level:
-    level: Any = get_env('SNEK_LEVEL')
+def _get_default_level(envname: str) -> Level:
+    level: Any = get_env(envname)
     if level is not None:
         try:
             ilevel = int(level)
@@ -58,17 +58,26 @@ _rootLogger: Logger
 _cache: dict[str, Logger] = {}
 _initialized = False
 
-def init(name: str):
+def init(name: str, envprefix: str="JSNAKE") -> None:
     """
-    Initialize the logging hiererchy with NAME as the root.
+    Initialize the logging hiererchy.
 
-    This MUST be called before any other function in this module.
+    :param str name: The name of the root logger
+
+    :param str envprefix: The prefix to the environment name used
+                          to get the default logging level
+
+    The default level for loggers is taken from the environment variable
+    ``X_LEVEL``, where ``X`` is the value of `envprefix`.
+
+    .. warning::
+       This MUST be called before any other function in this module.
     """
     global _rootLogger, _initialized
 
     # Get default level
     global DEFAULT_LEVEL
-    DEFAULT_LEVEL = _get_default_level()
+    DEFAULT_LEVEL = _get_default_level(f"{envprefix}_LEVEL")
 
     # Set flag
     _initialized = True

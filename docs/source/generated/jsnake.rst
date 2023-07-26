@@ -1,0 +1,4 @@
+﻿jsnake
+======
+
+.. automodule:: jsnake

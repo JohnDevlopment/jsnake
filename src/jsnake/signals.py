@@ -1,24 +1,19 @@
+"""Signals, objects which implement the command pattern."""
+
 from __future__ import annotations
-from typing import Protocol, overload, cast, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import TypeGuard
+    from typing import Any, TypeGuard, Protocol
+
+    class _signal_function(Protocol):
+        def __call__(self, obj: object, *args: Any, **kw: Any) -> None:
+            ...
+
+    _SignalBinds = tuple[_signal_function, tuple[Any, ...], dict[str, Any]]
 
 class InvalidSignalError(RuntimeError):
     """Invalid signal."""
-
-class observer(Protocol):
-    """An observer that takes one or more signals."""
-
-    def on_notify(self, sig: str, obj: Any, *args: Any, **kw: Any):
-        """Called when OBJ has notified of signal SIG."""
-        ...
-
-class _signal_function(Protocol):
-    def __call__(self, obj: object, *args: Any, **kw: Any) -> None:
-        ...
-
-_SignalBinds = tuple[_signal_function, tuple[Any, ...], dict[str, Any]]
 
 class signal:
     """Implements the observer pattern."""
@@ -27,18 +22,19 @@ class signal:
 
     def __init__(self, name: str, obj: object=None):
         """
-        Initialize the signal with the given NAME.
+        Construct a signal with the given name.
 
-        OBJ is the object to which this signal belongs.
-        If OBJ is omitted or None, the 'self' argument
-        of the caller is used instead; if 'self' is
-        undefined, the module is used.
+        :param str name: The name of the signal
+
+        :param object obj: The object which is considered
+                           the signal's owner. If omitted,
+                           the caller's ``self`` is used, or
+                           its module if ``self`` is unavailable
         """
-        self.name = name
-        self.observers: list[observer | _SignalBinds] = []
-        self.observer_count = 0
-
-        self.obj = obj
+        self.name = name #: Name of the signal
+        self.observers = [] #: List of observers/binds
+        self.observer_count = 0 #: Number of observers
+        self.obj = obj #: Object this is bound to
 
         if obj is None:
             import inspect, sys
@@ -60,22 +56,40 @@ class signal:
 
             self.obj = obj
 
-    def _form_signal_bind(self, fn: _signal_function,
-                          *args: Any, **kw: Any):
+    def _form_signal_bind(self, fn, *args, **kw):
         return fn, args, kw
 
-    @overload
-    def connect(self, obj_or_func: observer,
-                *binds: Any, **kw: Any) -> None:
-        ...
-
-    @overload
-    def connect(self, obj_or_func: _signal_function,
-                *binds: Any, **kw: Any) -> None:
-        ...
-
     def connect(self, obj_or_func, *binds, **kw):
-        """Connect to the observer OBJ."""
+        """
+        Connect the signal.
+
+        :param obj_or_func: A class which has an ``on_notify``
+                            method, or a function
+
+        :param *binds: Positional arguments that get bound to the
+                       connected observer/function
+
+        :param **kw: Keyword arguments that get bound to the connected
+                     observe/function
+
+        .. code-block:: python
+
+           def on_notified(obj: object, *args, **kw):
+               ...
+
+           class observer:
+               def on_notify(self, sig: str, obj: object, *args, **kw):
+                   ...
+
+        Unless `obj_or_func` is a function, it is treated as an object which
+        defines a ``on_notify`` method. That method is expected to take as
+        arguments the name of the signal, the object that is bound to it
+        (see :py:func:`__init__`), and the arguments passed to :py:func:`emit`
+        (see documentation).
+
+        If `obj_or_func` is a function, it shall accept the same arguments
+        in the same order.
+        """
         if callable(obj_or_func):
             bind = self._form_signal_bind(obj_or_func, *binds, **kw)
             self.observers.append(bind)
@@ -84,18 +98,19 @@ class signal:
 
         self.observer_count += 1
 
-    @overload
-    def disconnect(self, obj_or_func: observer,
-                   *binds: Any, **kw: Any) -> None:
-        ...
-
-    @overload
-    def disconnect(self, obj_or_func: _signal_function,
-                   *binds: Any, **kw: Any) -> None:
-        ...
-
     def disconnect(self, obj_or_func, *binds, **kw):
-        """Disconnect from the observer OBJ."""
+        """
+        Disconnect the signal.
+
+        :param *binds: Positional arguments that get bound to the
+                       connected observer/function
+
+        :param **kw: Keyword arguments that get bound to the connected
+                     observe/function
+
+        .. note::
+           Arguments must be the same as the ones passed to :py:func:`connect`.
+        """
         if callable(obj_or_func):
             bind = self._form_signal_bind(obj_or_func, *binds, **kw)
             self.observers.remove(bind)
@@ -105,24 +120,31 @@ class signal:
         self.observer_count -= 1
 
     @staticmethod
-    def _is_signal_bind(arg: observer | _SignalBinds) -> TypeGuard[_SignalBinds]:
+    def _is_signal_bind(arg) -> TypeGuard[_SignalBinds]:
         return isinstance(arg, tuple)
 
     def emit(self, *args: Any, **kw: Any):
         """
-        Emit the signal.
+        Emit the signal, notifying all registered observers of the event.
 
-        Notify all connected observers of the event.
+        :param Any *args: Positional arguments that get forwarded to any
+                          registered observers
+
+        :param **kw: Keyword arguments that get forwarded to the registered
+                     observers
         """
         for obv in self.observers:
             if self._is_signal_bind(obv):
+                # Is a signal bind (tuple with a function, *args, and **kw)
                 fn, sargs, skw = obv
                 args = args + sargs
                 kw.update(skw)
+
+                # Call function with appended arguments
                 fn(self.obj, *args, **kw)
             else:
-                cast(observer, obv).on_notify(self.name,
-                                              self.obj, *args, **kw)
+                # Is an observer, call its notify method
+                obv.on_notify(self.name, self.obj, *args, **kw)
 
     def __str__(self) -> str:
         return self.name

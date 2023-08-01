@@ -17,12 +17,15 @@ class Level(IntEnum):
     CRITICAL = logging.CRITICAL
 
     @classmethod
-    def find_by_keyword(cls, key: str):
+    def find_by_keyword(cls, key):
         """
         Do a keyword lookup of the enum.
 
         :param str key: A key used to search the enum. Should
                         be one of the defined members
+
+        :return: The logging level object corresponding to `key`
+        :rtype: Level or None
         """
         return cls.__members__.get(key)
 

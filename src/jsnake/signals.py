@@ -1,16 +1,6 @@
 """Signals, objects which implement the command pattern."""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Any, TypeGuard, Protocol
-
-    class _signal_function(Protocol):
-        def __call__(self, obj: object, *args: Any, **kw: Any) -> None:
-            ...
-
-    _SignalBinds = tuple[_signal_function, tuple[Any, ...], dict[str, Any]]
 
 class InvalidSignalError(RuntimeError):
     """Invalid signal."""
@@ -18,7 +8,7 @@ class InvalidSignalError(RuntimeError):
 class signal:
     """Implements the observer pattern."""
 
-    __slots__ = ('name', 'observers', 'observer_count', 'obj')
+    __slots__ = ('name', '_observers', 'obj')
 
     def __init__(self, name: str, obj: object=None):
         """
@@ -31,10 +21,9 @@ class signal:
                            the caller's ``self`` is used, or
                            its module if ``self`` is unavailable
         """
-        self.name = name #: Name of the signal
-        self.observers = [] #: List of observers/binds
-        self.observer_count = 0 #: Number of observers
-        self.obj = obj #: Object this is bound to
+        self.name = name #: Name of the signal.
+        self._observers = []
+        self.obj = obj #: Object bound to the signal.
 
         if obj is None:
             import inspect, sys
@@ -59,92 +48,93 @@ class signal:
     def _form_signal_bind(self, fn, *args, **kw):
         return fn, args, kw
 
-    def connect(self, obj_or_func, *binds, **kw):
+    @property
+    def count(self):
+        """Number of registered functions."""
+        return len(self._observers)
+
+    def connect(self, func, *binds, **kw):
         """
         Connect the signal.
 
-        :param obj_or_func: A class which has an ``on_notify``
-                            method, or a function
+        :param function func: A function that matches :ref:`signal-function`
 
-        :param *binds: Positional arguments that get bound to the
-                       connected observer/function
+        :param \*binds: Positional arguments that get bound to `func`
 
-        :param **kw: Keyword arguments that get bound to the connected
-                     observe/function
+        :param \*\*kw: Keyword arguments that get bound to `func`
+
+        :raises TypeError: If `func` is not callable
+
+        .. _signal-function:
+
+        Signal Function
+        ---------------
 
         .. code-block:: python
 
            def on_notified(obj: object, *args, **kw):
                ...
 
-           class observer:
-               def on_notify(self, sig: str, obj: object, *args, **kw):
-                   ...
-
-        Unless `obj_or_func` is a function, it is treated as an object which
-        defines a ``on_notify`` method. That method is expected to take as
-        arguments the name of the signal, the object that is bound to it
-        (see :py:func:`__init__`), and the arguments passed to :py:func:`emit`
-        (see documentation).
-
-        If `obj_or_func` is a function, it shall accept the same arguments
-        in the same order.
+        `func` is a function that accepts one or more arguments:
+        the first and only mandatory argument is the object bound to
+        this signal (`obj` in :py:meth:`__init__`). `\*binds` and
+        `\*\*kw` are provided to `func`.
         """
-        if callable(obj_or_func):
-            bind = self._form_signal_bind(obj_or_func, *binds, **kw)
-            self.observers.append(bind)
-        else:
-            self.observers.append(obj_or_func)
+        if not callable(func):
+            raise TypeError("First argument must be a function")
 
-        self.observer_count += 1
+        bind = self._form_signal_bind(func, *binds, **kw)
+        self._observers.append(bind)
 
-    def disconnect(self, obj_or_func, *binds, **kw):
+    def disconnect(self, func, *binds, **kw):
         """
         Disconnect the signal.
 
-        :param *binds: Positional arguments that get bound to the
-                       connected observer/function
+        :param \*binds: Positional arguments that get bound to `func`
 
-        :param **kw: Keyword arguments that get bound to the connected
-                     observe/function
+        :param \*\*kw: Keyword arguments that get bound to the connected
+                       observe/function
+
+        :raises ValueError: If this signal is not connected to `func` with
+                            this particular set of parameters
 
         .. note::
            Arguments must be the same as the ones passed to :py:func:`connect`.
         """
-        if callable(obj_or_func):
-            bind = self._form_signal_bind(obj_or_func, *binds, **kw)
-            self.observers.remove(bind)
-        else:
-            self.observers.remove(obj_or_func)
-
-        self.observer_count -= 1
+        bind = self._form_signal_bind(func, *binds, **kw)
+        self._observers.remove(bind)
 
     @staticmethod
-    def _is_signal_bind(arg) -> TypeGuard[_SignalBinds]:
+    def _is_signal_bind(arg):
+        # TODO: Make this check more thorough
         return isinstance(arg, tuple)
 
-    def emit(self, *args: Any, **kw: Any):
+    def emit(self, *args, **kw):
         """
         Emit the signal, notifying all registered observers of the event.
 
-        :param Any *args: Positional arguments that get forwarded to any
-                          registered observers
+        :param \*args: Positional arguments that get forwarded to any
+                      registered observers
 
-        :param **kw: Keyword arguments that get forwarded to the registered
+        :param \*\*kw: Keyword arguments that get forwarded to the registered
                      observers
-        """
-        for obv in self.observers:
-            if self._is_signal_bind(obv):
-                # Is a signal bind (tuple with a function, *args, and **kw)
-                fn, sargs, skw = obv
-                args = args + sargs
-                kw.update(skw)
 
-                # Call function with appended arguments
-                fn(self.obj, *args, **kw)
-            else:
-                # Is an observer, call its notify method
-                obv.on_notify(self.name, self.obj, *args, **kw)
+        Functions that are connected to this signal will accept arguments
+        in the following order: the `obj` parameter passed to :py:meth:`__init__`,
+        `\*args` and `\*\*kw` from this function, and `\*args` and `\*\*kw` from
+        :py:meth:`connect`.
+        """
+        for obv in self._observers:
+            assert self._is_signal_bind(obv), "argument is not a signal binding"
+
+            # Is a signal bind (tuple with a function, *args, and **kw)
+            fn, sargs, skw = obv
+            args = args + sargs
+            kw.update(skw)
+
+            # Call function with appended arguments
+            fn(self.obj, *args, **kw)
 
     def __str__(self) -> str:
-        return self.name
+        return self._name
+

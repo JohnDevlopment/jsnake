@@ -68,10 +68,9 @@ def init(name: str, envprefix: str="JSNAKE"):
     .. warning::
        This MUST be called before any other function in this module.
     """
-    global _rootLogger, _initialized
+    global _rootLogger, _initialized, DEFAULT_LEVEL
 
     # Get default level
-    global DEFAULT_LEVEL
     DEFAULT_LEVEL = _get_default_level(f"{envprefix}_LEVEL")
 
     # Set flag

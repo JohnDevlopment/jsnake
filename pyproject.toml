@@ -19,9 +19,11 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
+dependencies = ["typing_extensions"]
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov"]
+doc = ["Sphinx>=6.2.1", "sphinx-rtd-theme>=1.2.2"]
 
 [tool.flit.module]
 name = "jsnake"

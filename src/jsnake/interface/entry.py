@@ -1,7 +1,7 @@
 from __future__ import annotations
 from tkinter import ttk
 from .utils import _WidgetMixin
-from ..signals import signal, InvalidSignalError
+from ..signals import signal
 from typing import TYPE_CHECKING
 import tkinter as tk, sys
 
@@ -15,47 +15,33 @@ class ExEntry(ttk.Entry, _WidgetMixin):
     def __init__(self, master: _Widget=None, *, scrollx: bool=False,
                  text: str | None=None, clearbutton: bool=False, **kw: Any):
         """
-        EXTRA OPTIONS
+        Construct an extended entry widget with the parent `master`.
 
-            scrollx     = if true, add a scrollbar
-            text        = specify a textual string to display next
-                          to the entry
-            clearbutton = if set to True, a button is displayed
-                          that clears the text when pressed
+        :param master: This window's parent
 
-        SIGNALS
+        :keyword bool clearbutton: If true, a button is displayed next to the entry
+                                   that clears the entry text when pressed
 
-            x_scrollbar_changed(state: bool)
-                The horizontal scrollbar has changed. STATE
-                is true if enabled and false otherwise.
+        :keyword bool scrollx: If true, a horizontal scrollbar is added
 
-            label_changed(new_text: str)
-                The 'text' parameter has changed. Provides
-                the new string for the label.
-
-            clearbutton_changed(enabled: bool)
-                The 'clearbutton' parameter has changed.
-                Provides the enabled status of the button.
-
-            text_changed(new_text: str)
-                The text inside the entry has changed. Provides
-                the updated content.
+        :keyword text: A textual string to display as a label next to the entry
+        :type text: str or None
         """
         # Add signal 'x_scrollbar_changed'
         self.on_x_scrollbar_changed = signal('x_scrollbar_changed', self)
-        self.on_x_scrollbar_changed.connect(self)
+        self.on_x_scrollbar_changed.connect(self._on_x_scrollbar_changed)
 
         # Add signal 'label_changed'
         self.on_label_changed = signal('label_changed', self)
-        self.on_label_changed.connect(self)
+        self.on_label_changed.connect(self._on_label_changed)
 
         # This signal is emitted whenever the text inside the entry changes
         self.on_text_changed = signal('text_changed', self)
-        self.on_text_changed.connect(self)
+        self.on_text_changed.connect(self._on_text_changed)
 
         # Add signal 'clearbutton_changed'
         self.on_clearbutton_changed = signal('clearbutton_changed', self)
-        self.on_clearbutton_changed.connect(self)
+        self.on_clearbutton_changed.connect(self._on_clearbutton_changed)
 
         # Frame this enter goes inside
         self.frame = ttk.Frame(master, padding='0 0 0 16')
@@ -127,60 +113,6 @@ class ExEntry(ttk.Entry, _WidgetMixin):
                   text: str | None=None, **kw: Any):
         return self.configure(scrollx=scrollx, text=text, **kw)
 
-    def on_notify(self, sig: str, obj=None, *args: Any, **kw: Any) -> None: # pyright: ignore
-        match sig:
-            case 'x_scrollbar_changed':
-                scrollx: bool = args[0]
-                if scrollx:
-                    if not self.xbar.winfo_ismapped():
-                        # Map the scrollbar if it isn't already
-                        self.xbar.grid(row=1, column=1, sticky='ew')
-                else:
-                    if self.xbar.winfo_ismapped():
-                        # The scrollbar is visible, so unmap it
-                        self.xbar.grid_forget()
-
-            case 'label_changed':
-                text: str = args[0]
-                label = self.label
-                if text:
-                    if not label.winfo_ismapped():
-                        # Map the label if it isn't already visible
-                        self.label.grid(row=0, column=0)
-
-                    # Configure the text
-                    label.configure(text=text)
-                else:
-                    if label.winfo_ismapped():
-                        # The label is visible, so unmap it
-                        label.grid_forget()
-
-            case 'clearbutton_changed':
-                # The 'clearbutton' option has been configured
-                clearbutton = self.clearbutton
-
-                enabled: bool = args[0]
-                if enabled:
-                    if not clearbutton.winfo_ismapped():
-                        # Map the button if it's invisible
-                        clearbutton.grid(row=0, column=2)
-                else:
-                    if clearbutton.winfo_ismapped():
-                        # Unmap the visible button
-                        clearbutton.grid_forget()
-
-            case 'text_changed':
-                # The text inside the entry has changed
-                new_text: str = args[0]
-
-                # Enable the 'clear' button if there's text, otherwise disable it
-                new_state = ("!disabled",) if new_text else ("disabled",)
-                self.clearbutton.state(new_state)
-
-            case _:
-                # Invalid signal, therefore raise exception
-                raise InvalidSignalError(sig)
-
     def __validate_entry(self,
                          reason: Literal['focusin', 'focusout', 'key', 'forced'],
                          new_text: str) -> bool:
@@ -194,73 +126,53 @@ class ExEntry(ttk.Entry, _WidgetMixin):
 
         return True
 
-ExEntry.override_init_docstring(ttk.Entry)
+    ## Signals
+    #
 
-def _test_nontemp_variables():
-    from .utils import StringVar
+    def _on_label_changed(self, obj: object, new_text: str, **kw):
+        label = self.label
+        if new_text:
+            # There is text to display
 
-    for varname in ['NAME', 'RADIO']:
-        var = StringVar(name=varname)
-        print(f"{varname}:", var.get())
+            if not label.winfo_ismapped():
+                # Map the label
+                self.label.grid(row=0, column=0)
 
-def _test_temp_variables():
-    from .utils import StringVar
+            # Configure the text
+            label.configure(text=new_text)
 
-    for varname in ['TEMPNAME', 'TEMPRADIO']:
-        var = StringVar(name=varname, temp=True)
-        print(f"{varname}:", var.get())
+            return
 
-def make_interface():
-    from .utils import StringVar
+        # No text, unmap the label if it is visible
+        if label.winfo_ismapped():
+            label.grid_forget()
 
-    root = tk.Tk()
-    root.title("Test ExEntry")
+    def _on_x_scrollbar_changed(self, obj: object, state: bool, **kw):
+        if state:
+            if not self.xbar.winfo_ismapped():
+                # Map the scrollbar if it isn't already
+                self.xbar.grid(row=1, column=1, sticky='ew')
+                return
 
-    frame = ttk.Frame()
-    frame.pack(fill=tk.BOTH, expand=True)
+            if self.xbar.winfo_ismapped():
+                # The scrollbar is visible, so unmap it
+                self.xbar.grid_forget()
 
-    # Non-temp variables
-    subframe = ttk.Labelframe(frame, text="Non-Temp Vars")
-    subframe.pack()
+    def _on_clearbutton_changed(self, obj: object, state: bool, **kw):
+        clearbutton = self.clearbutton
 
-    ExEntry(subframe, text="Name", textvariable=StringVar(name='NAME'))\
-        .pack()
+        # If enabled, map the button if not already
+        if state and not clearbutton.winfo_ismapped():
+            clearbutton.grid(row=0, column=2)
+            return
 
-    var = StringVar(name='RADIO', value='one')
-    ttk.Radiobutton(subframe, variable=var, value='one', text="One").pack()
-    ttk.Radiobutton(subframe, variable=var, value='two', text="Two").pack()
-    ttk.Radiobutton(subframe, variable=var, value='three', text="Three").pack()
+        # If disabled, unmap the button if it is visible
+        if not state and clearbutton.winfo_ismapped():
+            clearbutton.grid_forget()
 
-    ttk.Button(subframe, text='Test', command=_test_nontemp_variables).pack()
+    def _on_text_changed(self, obj: object, new_text: str, **kw):
+        # Enable the 'clear' button if there's text, otherwise disable it
+        new_state = ("!disabled",) if new_text else ("disabled",)
+        self.clearbutton.state(new_state)
 
-    # Temp variables
-    subframe = ttk.Labelframe(frame, text="Temp Vars")
-    subframe.pack()
-
-    ExEntry(subframe, text="Temp Name", textvariable=StringVar(name='TEMPNAME', temp=True))\
-        .pack()
-
-    var = StringVar(name='TEMPRADIO', value='one', temp=True)
-    ttk.Radiobutton(subframe, variable=var, value='one', text="One").pack()
-    ttk.Radiobutton(subframe, variable=var, value='two', text="Two").pack()
-    ttk.Radiobutton(subframe, variable=var, value='three', text="Three").pack()
-
-    ttk.Button(subframe, text='Test', command=_test_temp_variables).pack()
-
-    # ExEntry options
-    subframe = ttk.Labelframe(frame, text="Options")
-    subframe.pack()
-
-    entry = ExEntry(subframe)
-    entry.pack()
-    entry.after(2000, lambda: entry.config(clearbutton=True))
-
-    return root
-
-def test () -> int:
-    root = make_interface()
-    root.mainloop()
-    return 0
-
-if __name__ == "__main__":
-    sys.exit(test())
+# ExEntry.override_init_docstring(ttk.Entry)

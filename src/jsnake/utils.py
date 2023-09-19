@@ -119,6 +119,42 @@ class attr_dict(dict[str, Any]):
     def __setattr__(self, key: str, value) -> None:
         self[key] = value
 
+def binary_search(array, pattern) -> int:
+    """
+    Does a binary search in ARRAY for PATTERN.
+
+    Returns the index in ARRAY where PATTERN occurs
+    on success, or -1 on failure.
+
+    For this function to work as intended, ARRAY must be sorted.
+
+    ARRAY can be list or any type that supports array-like indexing.
+    The values in ARRAY as well as PATTERN should be the same type; they
+    must also support the less-than (<) operator.
+    """
+    res = -1
+    low, high = 0, len(array)-1
+
+    if low > high: return -1
+
+    while (high - low) > 1:
+        mid = (high + low) // 2
+
+        v = array[mid]
+        if v == pattern:
+            return mid
+        elif v < pattern:
+            low = mid + 1
+        else:
+            high = mid - 1
+
+    if array[low] == pattern:
+        res = low
+    elif array[high] == pattern:
+        res = high
+
+    return res
+
 class readonly_dict(dict[str, Any]):
     """A dictionary whose values cannot be changed."""
 

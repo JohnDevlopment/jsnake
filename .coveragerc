@@ -1,0 +1,11 @@
+[report]
+exclude_lines =
+    pragma: no cover
+    @abstract
+    @overload
+    class .*Protocol
+    def main.*
+    def _[a-zA-Z]+.*
+    if __name__ == "__main__"
+    if TYPE_CHECKING
+    [a-zA-Z_].* [ \t]*=[ \t]*.*

@@ -138,3 +138,7 @@ class signal:
     def __str__(self) -> str:
         return self._name
 
+<<<<<<< HEAD
+=======
+        return self.name
+>>>>>>> 1a1f567 (Remove signal tests)

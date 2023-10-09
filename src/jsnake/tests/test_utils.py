@@ -1,7 +1,9 @@
 from __future__ import annotations
 from ..utils import attr_dict, Filesize, binary_search, readonly_dict, get_env
 from ..errors import ConstantError
-import pytest
+from ..logging import init, get_logger, Level
+from pathlib import Path
+import pytest, random, pickle
 
 def test_attrdict():
     d = attr_dict()
@@ -82,3 +84,25 @@ class TestBinarySearch:
         array = list(range(1, 5000))
         assert binary_search(array, 300) > 0
         assert binary_search(array, -2) < 0
+
+    def test_strings(self, capsys):
+        init('jsnake')
+
+        fp = Path(__file__).parent / "_500_random_words.pickle"
+
+        array: list[str]
+        with open(fp, 'rb') as fd:
+            array = pickle.load(fd)
+
+        logger = get_logger('tests.binary_search', Level.INFO)
+
+        with capsys.disabled():
+            word = array[random.randint(0, 499)]
+            logger.info("Random word chosen: %s", word)
+
+            idx = binary_search(array, word)
+            assert idx >= 0, f"{word} not found in array"
+            logger.info("%s found at index %d", word, idx)
+
+            idx = binary_search(array, "should not exist")
+            assert idx < 0

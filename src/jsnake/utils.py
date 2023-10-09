@@ -15,7 +15,23 @@ class Filesize:
     """
     A representation of a file size.
 
-    >>> fs = Filesize.from_string('30 mb')
+    You can initialize an object with a string
+    denoting the size (see :py:meth:`from_string`) or
+    with a numeric value (see :py:meth:`from_value`).
+
+    .. code-block:: python
+       :caption: Examples
+
+       fs = Filesize.from_string("30 mb")
+       str(fs) # "30 mb"
+       fs.approximate # False
+
+       fs = Filesize.from_string("~10 kb")
+       str(fs) # "~10 kb"
+       fs.approximate # True
+
+       fs = Filesize.from_value(1024)
+       str(fs) # "1 kb"
     """
 
     def __init__(self):

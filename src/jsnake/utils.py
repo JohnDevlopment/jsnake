@@ -179,12 +179,26 @@ def binary_search(array, pattern) -> int:
     return res
 
 class readonly_dict(dict[str, Any]):
-    """A dictionary whose values cannot be changed."""
+    """
+    A dictionary whose values cannot be changed.
+
+    The only difference between this and a normal
+    ``dict`` is that :py:exc:`ConstantError` is raised
+    should the user attempt to set an item after initialization.
+    """
 
     def __setitem__(self, key, value) -> NoReturn: # pyright: ignore
         raise ConstantError(f"cannot assign elements to {type(self).__name__}")
 
 def get_env(envname: str) -> str | None:
-    """Get an environment variable, return None if it doesn't exist."""
+    """
+    Get an environment variable, return None if it doesn't exist.
+
+    :param str envname: a variable defined in the environment
+
+    :return: the string value of `envname` if `envname` is set,
+             or ``None`` otherwise
+    :rtype: str or None
+    """
     temp = os.getenv(envname)
     return temp

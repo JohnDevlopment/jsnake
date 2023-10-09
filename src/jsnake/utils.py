@@ -3,14 +3,14 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, cast, Literal, Any
 from .errors import ConstantError
-from dataclasses import dataclass
-import os, re, unittest
+import os, re
 
 if TYPE_CHECKING:
     from typing import Any, NoReturn
     from typing_extensions import Self
 
-@dataclass
+_SizeUnit = Literal['b', 'kb', 'mb', 'gb']
+
 class Filesize:
     """
     A representation of a file size.
@@ -18,30 +18,22 @@ class Filesize:
     >>> fs = Filesize.from_string('30 mb')
     """
 
-    size: float #: Numeric value indicating the size
-    unit: Literal['b', 'kb', 'mb', 'gb'] #: Unit of the
-    raw_byte_size: float #: Size in bytes
-    approximate: bool #: Whether the size is approximate
+    def __init__(self):
+        self.size = 0.0 #: Size value
+        self.raw_byte_size = 0.0 #: Size in bytes
+        self.unit: _SizeUnit = 'b' #: Size unit
+        self.approximate: bool = False #: True if size is approximate
 
     def __str__(self) -> str:
         size = self.size
         if self.unit == 'b':
             size = int(size)
 
-        return "{}{}{}".format(
+        return "{}{} {}".format(
             "~" if self.approximate else "",
             str(size),
-            " " + self.unit
+            self.unit
         )
-
-    def __post_init__(self):
-        if isinstance(self.size, int):
-            # Convert integer to float
-            self.size = float(self.size)
-
-        if isinstance(self.raw_byte_size, int):
-            # Convert integer to float
-            self.raw_byte_size = float(self.raw_byte_size)
 
     def __add__(self, other: Filesize, /) -> Self:
         raw_size = other.raw_byte_size + self.raw_byte_size
@@ -74,20 +66,22 @@ class Filesize:
         # Regexp: Parse one or more numbers followed by optional
         # whitespace and a suffix composed of any one of the letters
         # m, M, g, G, k, or K, followed by a b or B.
-        m = re.search(r'([1-9][0-9]*)\s*([mMgGkK]?[bB])', string)
+        m = re.search(r'~?([1-9][0-9]*)\s*([mMgGkK]?[bB])', string)
         if m is None:
             raise ValueError(f"invalid string '{string}'")
         num, unit =  m.group(1, 2)
 
-        # Add a 'b' if it's missing
-        # if not (unit := unit.lower()).endswith('b'):
-        #     unit += "b"
+        # Search for a ~ at the beginning of the matched substring
+        approximate = False
+        if m.group(0)[0] == '~':
+            # ~ is found, thus size is approximate
+            approximate = True
 
         assert isinstance(unit, str)
         assert unit in ['b', 'kb', 'mb', 'gb']
 
         # Type checker conversion
-        unit = cast(Literal['b', 'kb', 'mb', 'gb'], unit)
+        unit = cast(_SizeUnit, unit)
 
         # Mapping of multipliers
         multipliers = {
@@ -98,12 +92,14 @@ class Filesize:
         }
 
         # Construct class
-        return cls(
-            float(num),
-            unit,
-            float(num) * multipliers[unit],
-            False
-        )
+        obj = cls()
+
+        obj.size = float(num)
+        obj.unit = unit
+        obj.raw_byte_size = float(num) * multipliers[unit]
+        obj.approximate = approximate
+
+        return obj
 
     @classmethod
     def from_value(cls, value: float, approximate: bool=False) -> Self:
@@ -124,7 +120,15 @@ class Filesize:
             value /= 1024.0
             i += 1
 
-        return cls(round(value, 2), suffixes[i], raw_size, approximate)
+        # Construct class
+        obj = cls()
+
+        obj.size = round(value, 2)
+        obj.unit = suffixes[i]
+        obj.raw_byte_size = raw_size
+        obj.approximate = approximate
+
+        return obj
 
 class attr_dict(dict[str, Any]):
     """A dictionary that supports attribute notation."""

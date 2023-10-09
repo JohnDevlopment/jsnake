@@ -47,6 +47,7 @@ class TestFilesizeClass:
         fs = Filesize.from_string(string)
         assert fs.size == size
         assert fs.raw_byte_size == raw_size
+        assert fs.approximate == approximate
 
     def test_errors(self):
         with pytest.raises(ValueError):

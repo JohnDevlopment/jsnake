@@ -12,17 +12,25 @@ if TYPE_CHECKING:
 
 @dataclass
 class Filesize:
-    """A representation of a file size."""
+    """
+    A representation of a file size.
 
-    size: float
-    unit: Literal['b', 'kb', 'mb', 'gb']
-    raw_byte_size: float
-    approximate: bool
+    >>> fs = Filesize.from_string('30 mb')
+    """
+
+    size: float #: Numeric value indicating the size
+    unit: Literal['b', 'kb', 'mb', 'gb'] #: Unit of the
+    raw_byte_size: float #: Size in bytes
+    approximate: bool #: Whether the size is approximate
 
     def __str__(self) -> str:
+        size = self.size
+        if self.unit == 'b':
+            size = int(size)
+
         return "{}{}{}".format(
             "~" if self.approximate else "",
-            str(self.size),
+            str(size),
             " " + self.unit
         )
 
@@ -45,27 +53,35 @@ class Filesize:
         Parse a string expressing a file size.
 
         :param str string: A string consisting of a number
-                           followed by a size unit. The format is
-                           a valid integer with one or more digits,
-                           followed by zero or more spaces, and a
-                           unit consisting of b, k, m, and g.
-                           K, m, and g can be captialized and followed
-                           by an optional 'b' (e.g., kb, Mb, g, etc.).
+                           followed by a size unit. The number
+                           cannot have any leading zeroes. The
+                           number and unit can be separated by
+                           whitespace, not it is not neccessary.
+                           The unit can be ``b``, ``kb``, ``mb``,
+                           or ``gb``. If the first character is
+                           a ``~``, then the value is considered
+                           approximate
 
-        :return: An object representing the size denoting in `string`.
+        :return: An object representing the size denoted in `string`.
         :rtype: Filesize
+
+        .. rubric:: Examples
+
+        >>> Filesize.from_string('30 b')
+        >>> Filesize.from_string('30mb')
+        >>> Filesize.from_string('~30 kb')
         """
         # Regexp: Parse one or more numbers followed by optional
         # whitespace and a suffix composed of any one of the letters
-        # m, M, g, G, k, or K, followed by an optional b.
-        m = re.search(r'([1-9][0-9]*)\s*([mMgGkK]b?)', string)
+        # m, M, g, G, k, or K, followed by a b or B.
+        m = re.search(r'([1-9][0-9]*)\s*([mMgGkK]?[bB])', string)
         if m is None:
-            raise ValueError("")
+            raise ValueError(f"invalid string '{string}'")
         num, unit =  m.group(1, 2)
 
         # Add a 'b' if it's missing
-        if not (unit := unit.lower()).endswith('b'):
-            unit += "b"
+        # if not (unit := unit.lower()).endswith('b'):
+        #     unit += "b"
 
         assert isinstance(unit, str)
         assert unit in ['b', 'kb', 'mb', 'gb']
@@ -121,16 +137,19 @@ class attr_dict(dict[str, Any]):
 
 def binary_search(array, pattern) -> int:
     """
-    Does a binary search in ARRAY for PATTERN.
+    Do a binary search in an array.
 
-    Returns the index in ARRAY where PATTERN occurs
-    on success, or -1 on failure.
+    :param list array: an array of values. Its contents must
+                       be of a type that supports ``>``, ``<``,
+                       and ``==`` operators. Its contents
+                       must also be sorted from lowest to highest
 
-    For this function to work as intended, ARRAY must be sorted.
+    :param pattern: the pattern to search for in `array`. It
+                    should be the same type as `array`'s contents
 
-    ARRAY can be list or any type that supports array-like indexing.
-    The values in ARRAY as well as PATTERN should be the same type; they
-    must also support the less-than (<) operator.
+    :return: the first index where `pattern` was found, or -1
+             on failure
+    :rtype: int
     """
     res = -1
     low, high = 0, len(array)-1
@@ -165,33 +184,3 @@ def get_env(envname: str) -> str | None:
     """Get an environment variable, return None if it doesn't exist."""
     temp = os.getenv(envname)
     return temp
-
-class TestClasses(unittest.TestCase):
-    def test_attr_dict(self):
-        d = attr_dict()
-
-        d['one'] = 1
-        self.assertEqual(d['one'], 1)
-        self.assertEqual(d['one'], d.one)
-
-        d.two = 2
-        self.assertEqual(d.two, 2)
-        self.assertEqual(d.two, d['two'])
-
-    def test_readonly_dict(self):
-        d = readonly_dict(one=1, two=2)
-        with self.assertRaises(ConstantError):
-            d['three'] = 3
-
-    def test_Filesize(self):
-        fs = Filesize(1, 'kb', 1024, False)
-        self.assertEqual(str(fs), "1.0 kb")
-
-        fs = Filesize.from_string("1 kb")
-        self.assertEqual(str(fs), "1.0 kb")
-
-        fs = Filesize.from_value(1073741824)
-        self.assertEqual(str(fs), "1.0 gb")
-
-if __name__ == "__main__":
-    unittest.main()

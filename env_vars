@@ -1,0 +1,6 @@
+[pytest]
+JSNAKE_BOOL = true
+JSNAKE_STRING = "string"
+JSNAKE_INT = 1
+JSNAKE_FLOAT = 1.15
+JSNAKE_LIST = [1, 2.05, "3"]

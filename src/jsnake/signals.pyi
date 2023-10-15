@@ -12,15 +12,15 @@ class signal:
     def __init__(self, name: str, obj: object=None): ...
 
     @property
-    def name(self):
+    def count(self) -> int:
         ...
 
     @property
-    def count(self):
+    def name(self) -> str:
         ...
 
     @property
-    def obj(self):
+    def obj(self) -> object:
         ...
 
     def connect(self, func: _signal_function, *binds: Any, **kw: Any) -> None:

@@ -1,7 +1,13 @@
 """Signals, objects which implement the command pattern."""
 
 from __future__ import annotations
+from typing import Protocol, Any, cast
 
+class _signal_function(Protocol):
+    def __call__(self, obj: object, *args: Any, **kw: Any) -> None:
+        ...
+
+# TODO: Remove this class
 class InvalidSignalError(RuntimeError):
     """Invalid signal."""
 
@@ -10,7 +16,7 @@ class signal:
 
     __slots__ = ('name', '_observers', 'obj')
 
-    def __init__(self, name: str, obj: object=None):
+    def __init__(self, name, obj=None):
         """
         Construct a signal with the given name.
 
@@ -21,9 +27,9 @@ class signal:
                            the caller's ``self`` is used, or
                            its module if ``self`` is unavailable
         """
-        self.name = name #: Name of the signal.
+        self.name: str = name #: Name of the signal
         self._observers = []
-        self.obj = obj #: Object bound to the signal.
+        self.obj = obj #: Object bound to the signal
 
         if obj is None:
             import inspect, sys
@@ -67,23 +73,26 @@ class signal:
 
         .. _signal-function:
 
-        Signal Function
-        ---------------
+        .. rubric:: Signal Function
 
         .. code-block:: python
 
            def on_notified(obj: object, *args, **kw):
                ...
 
-        `func` is a function that accepts one or more arguments:
-        the first and only mandatory argument is the object bound to
-        this signal (`obj` in :py:meth:`__init__`). `\*binds` and
-        `\*\*kw` are provided to `func`.
+        `func` must accept at least one argument, that being the
+        object bound to the signal (see :py:meth:`__init__`), but may
+        include any bindings found in `\*binds` and `\*\*kw`.
+        `\*binds` will be at the end of the argument list, after
+        any arguments passed to :py:meth:`emit`. Keyword arguments,
+        both those passed to :py:meth:`emit` and those passed here,
+        will be found in the keywords part of the signature.
         """
         if not callable(func):
             raise TypeError("First argument must be a function")
 
         bind = self._form_signal_bind(func, *binds, **kw)
+        # TODO: Error if bind is already defined
         self._observers.append(bind)
 
     def disconnect(self, func, *binds, **kw):
@@ -92,8 +101,7 @@ class signal:
 
         :param \*binds: Positional arguments that get bound to `func`
 
-        :param \*\*kw: Keyword arguments that get bound to the connected
-                       observe/function
+        :param \*\*kw: Keyword arguments that get bound to `func`
 
         :raises ValueError: If this signal is not connected to `func` with
                             this particular set of parameters
@@ -111,13 +119,13 @@ class signal:
 
     def emit(self, *args, **kw):
         """
-        Emit the signal, notifying all registered observers of the event.
+        Emit the signal.
 
         :param \*args: Positional arguments that get forwarded to any
-                      registered observers
+                       registered functions
 
         :param \*\*kw: Keyword arguments that get forwarded to the registered
-                     observers
+                       functions
 
         Functions that are connected to this signal will accept arguments
         in the following order: the `obj` parameter passed to :py:meth:`__init__`,
@@ -133,6 +141,7 @@ class signal:
             kw.update(skw)
 
             # Call function with appended arguments
+            fn = cast(_signal_function, fn)
             fn(self.obj, *args, **kw)
 
     def __str__(self) -> str:

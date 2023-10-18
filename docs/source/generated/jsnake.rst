@@ -1,4 +1,0 @@
-﻿jsnake
-======
-
-.. automodule:: jsnake

@@ -32,5 +32,3 @@ JSnake
 
 .. toctree::
    :maxdepth: 4
-
-   jsnake

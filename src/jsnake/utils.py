@@ -152,10 +152,16 @@ class Filesize:
 class attr_dict(dict[str, Any]):
     """A dictionary that supports attribute notation."""
 
+    def __raise_if_not_string(self, key: str, /) -> None:
+        if not isinstance(key, str):
+            raise TypeError(f"invalid key '{key}', not a string")
+
     def __getattr__(self, key: str) -> Any:
+        self.__raise_if_not_string(key)
         return self[key]
 
     def __setattr__(self, key: str, value) -> None:
+        self.__raise_if_not_string(key)
         self[key] = value
 
 def binary_search(array, pattern) -> int:

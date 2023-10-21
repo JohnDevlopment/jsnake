@@ -1,15 +1,14 @@
-# Utility functions and classes.
+"""Utility functions and classes."""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, cast, Literal, Any
+from typing import cast, Literal, Any
 from .errors import ConstantError
 import os, re
 
-if TYPE_CHECKING:
-    from typing import Any, NoReturn
-    from typing_extensions import Self
-
 _SizeUnit = Literal['b', 'kb', 'mb', 'gb']
+
+# Classes
+#
 
 class Filesize:
     """
@@ -34,11 +33,12 @@ class Filesize:
        str(fs) # "1 kb"
     """
 
-    def __init__(self):
-        self.size = 0.0 #: Size value
-        self.raw_byte_size = 0.0 #: Size in bytes
-        self.unit: _SizeUnit = 'b' #: Size unit
-        self.approximate: bool = False #: True if size is approximate
+    def __init__(self, size=0.0, raw_byte_size=0.0, unit: _SizeUnit='b',
+                 approximate: bool = False):
+        self.size = size #: Size value
+        self.raw_byte_size = raw_byte_size #: Size in bytes
+        self.unit = unit #: Size unit
+        self.approximate = approximate #: True if size is approximate
 
     def __str__(self) -> str:
         size = self.size
@@ -54,12 +54,12 @@ class Filesize:
     def __repr__(self) -> str:
         return f"Filesize(size={self.size!r}, {self.raw_byte_size!r}, {self.unit!r}, {self.approximate!r})"
 
-    def __add__(self, other: Filesize, /) -> Self:
+    def __add__(self, other: Filesize, /):
         raw_size = other.raw_byte_size + self.raw_byte_size
         return self.from_value(raw_size)
 
     @classmethod
-    def from_string(cls, string: str) -> Self:
+    def from_string(cls, string: str):
         """
         Parse a string expressing a file size.
 
@@ -79,8 +79,11 @@ class Filesize:
         .. rubric:: Examples
 
         >>> Filesize.from_string('30 b')
+        '30 b'
         >>> Filesize.from_string('30mb')
+        '30.0 mb'
         >>> Filesize.from_string('~30 kb')
+        '~30.0 kb'
         """
         # Regexp: Parse one or more numbers followed by optional
         # whitespace and a suffix composed of any one of the letters
@@ -121,7 +124,7 @@ class Filesize:
         return obj
 
     @classmethod
-    def from_value(cls, value: float, approximate: bool=False) -> Self:
+    def from_value(cls, value: float, approximate: bool=False):
         """
         Return a ``Filesize`` representing a the specified size.
 
@@ -131,6 +134,11 @@ class Filesize:
 
         :return: The object representation of `value`.
         :rtype: Filesize
+
+        >>> Filesize.from_string("10 mb")
+        Filesize(size=10.0, 10485760.0, 'mb', False)
+        >>> Filesize.from_string("~5 kb")
+        Filesize(size=5.0, 5120.0, 'kb', True)
         """
         raw_size = value
         suffixes = ('b', 'kb', 'mb', 'gb')
@@ -150,7 +158,16 @@ class Filesize:
         return obj
 
 class attr_dict(dict[str, Any]):
-    """A dictionary that supports attribute notation."""
+    """
+    A dictionary that supports attribute notation.
+
+    >>> d = attr_dict()
+    >>> d['one'] = 1
+    >>> d['one']
+    1
+    >>> d.one
+    1
+    """
 
     def __raise_if_not_string(self, key: str, /) -> None:
         if not isinstance(key, str):
@@ -164,17 +181,34 @@ class attr_dict(dict[str, Any]):
         self.__raise_if_not_string(key)
         self[key] = value
 
+class readonly_dict(dict[str, Any]):
+    """
+    A dictionary whose values cannot be changed.
+
+    The only difference between this and a normal
+    ``dict`` is that :py:exc:`ConstantError` is raised
+    should the user attempt to set an item after initialization.
+    """
+
+    def __setitem__(self, key, value): # pyright: ignore
+        raise ConstantError(f"cannot assign elements to {type(self).__name__}")
+
+# Functions
+#
+
 def binary_search(array, pattern) -> int:
     """
     Do a binary search in an array.
 
     :param list array: an array of values. Its contents must
-                       be of a type that supports ``>``, ``<``,
+                       be of a type that supports ``>``
                        and ``==`` operators. Its contents
                        must also be sorted from lowest to highest
 
     :param pattern: the pattern to search for in `array`. It
                     should be the same type as `array`'s contents
+                    or a type that can be compared with the elements
+                    in `array`
 
     :return: the first index where `pattern` was found, or -1
              on failure
@@ -203,18 +237,6 @@ def binary_search(array, pattern) -> int:
 
     return res
 
-class readonly_dict(dict[str, Any]):
-    """
-    A dictionary whose values cannot be changed.
-
-    The only difference between this and a normal
-    ``dict`` is that :py:exc:`ConstantError` is raised
-    should the user attempt to set an item after initialization.
-    """
-
-    def __setitem__(self, key, value) -> NoReturn: # pyright: ignore
-        raise ConstantError(f"cannot assign elements to {type(self).__name__}")
-
 def get_env(envname: str) -> str | None:
     """
     Get an environment variable, return None if it doesn't exist.
@@ -225,5 +247,4 @@ def get_env(envname: str) -> str | None:
              or ``None`` otherwise
     :rtype: str or None
     """
-    temp = os.getenv(envname)
-    return temp
+    return os.getenv(envname)

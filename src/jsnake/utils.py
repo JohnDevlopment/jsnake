@@ -51,6 +51,9 @@ class Filesize:
             self.unit
         )
 
+    def __repr__(self) -> str:
+        return f"Filesize(size={self.size!r}, {self.raw_byte_size!r}, {self.unit!r}, {self.approximate!r})"
+
     def __add__(self, other: Filesize, /) -> Self:
         raw_size = other.raw_byte_size + self.raw_byte_size
         return self.from_value(raw_size)

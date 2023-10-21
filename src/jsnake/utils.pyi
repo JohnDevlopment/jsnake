@@ -26,7 +26,7 @@ class attr_dict(dict[str, Any]):
     def __setattr__(self, key: str, value) -> None:
         ...
 
-def binary_search(array: Any, pattern: Any) -> int:
+def binary_search(array: list[Any], pattern: Any) -> int:
     ...
 
 class readonly_dict(dict[str, Any]):

@@ -19,8 +19,6 @@ _StateSpec = Literal['normal', 'disabled'] | tuple[str, ...]
 class _SupportsStateMethods(Protocol):
     def state(self, *args) -> Any: ...
 
-###
-
 # Classes
 #
 
@@ -40,10 +38,33 @@ class _ResourceManager:
         return self.resources.__contains__(key)
 
 class Variable(tk.Variable):
-    """Class to define value holders for widgets."""
+    """
+    Class to define value holders for widgets.
+
+    .. note:: This class should not be used directly.
+       Instead, use one of its subclasses.
+    """
 
     def __init__(self, master: _Widget=None, value: Any=None,
                  name: str | None=None, temp: bool=False):
+        """
+        Initialize the variable.
+
+        :param master: the widget's master. If ``None``,
+                       use the root
+        :type master: widget or None
+
+        :param Any value: the variable's initial value
+
+        :param name: the name of the variable.  If omitted,
+                     it defaults to ``PY_VARx``, where ``x`` is
+                     some number. If it matches an already existing
+                     variable, and `value` is omitted, then the existing
+                     value is retained
+        :type name: str or None
+
+        :param bool temp: whether the variable is temporary
+        """
         super().__init__(master, value, name)
         self.temp = temp
 
@@ -58,19 +79,28 @@ class Variable(tk.Variable):
         return master.tk
 
 class StringVar(Variable):
-    """Value holder for string variables."""
+    """
+    Value holder for string variables.
+
+    >>> v = StringVar(value="some string")
+    >>> v.get()
+    some string
+    """
 
     def __init__(self, master: _Widget=None, value: Any=None,
                  name: str | None=None, temp: bool=False):
         """
         Construct a string variable.
 
-        MASTER is the master widget.
-        VALUE is an optional value that defaults to "".
-        NAME is an optional Tcl name which defaults to PY_VARnum.
+        :param master: see :paramref:`Variable.master`
 
-        If NAME matches an existing variable and VALUE is omitted,
-        then the existing value is retained.
+        :param value: see :paramref:`Variable.value`.
+                      Defaults to ``""``
+        :type value: str or None
+
+        :param name: see :paramref:`Variable.name`
+
+        :param temp: see :paramref:`Variable.temp`
         """
         super().__init__(master, value, name, temp)
 
@@ -166,33 +196,37 @@ class _WidgetMixin: # pyright: ignore
         return self.__metadata.get(key, default)
 
 class TkBusyCommand(tk.Widget):
-    """A class representing "tk busy" command.
-
-    Use the hold() and forget() methods to mark a window as busy.
-
-    This class can be instantiated in a 'with' statement: the window is automatically held
-    and released as one exits the context.
     """
-    def __init__(self, master: tk.Widget, window, /):
+    A class representing "tk busy" command.
+
+    Call :py:meth:`hold` to mark a window as busy, and :py:meth:`forget` to unmark it.
+
+    This class can be instantiated in a ``with`` statement: the window's busy status
+    will be handled automatically.
+    """
+
+    def __init__(self, master: tk.Widget, window: tk.Widget, /):
         """
         Construct a TkBusyCommand object.
 
-        MASTER is the Tk master of this class.
-        WINDOW is the Widget that you intend to mark as busy.
+        :param tk.Widget master: the master of this widget
+
+        :param tk.Widget window: the window you intend to
+                                 mark as busy
         """
         super().__init__(master, 'frame')
         self._root = master
         self._tk = self._root.tk
         self._widget = window
 
-    def forget(self):
-        """Releases the busy-hold on the widget and its descendents."""
+    def forget(self) -> None:
+        """Release the busy-hold on the widget and its descendents."""
         if self.is_busy:
             self._tk.call('tk', 'busy', 'forget', self._widget)
             self._tk.call('update')
 
-    def hold(self):
-        """Makes the window appear busy."""
+    def hold(self) -> None:
+        """Make the window and its descendants appear busy."""
         if not self.is_busy:
             self._tk.call('tk', 'busy', 'hold', self._widget)
             self._tk.call('update')
@@ -213,10 +247,28 @@ class InState:
     """
     Used for temporary state changes of widgets.
 
-    Can be used with a context manager.
+    Can be used with the ``with`` statement.
+
+    .. code-block:: python
+
+       with InState(entry, ('!disabled',)):
+           # Edit the entry contents
+           ...
     """
 
     def __init__(self, owner: _SupportsStateMethods, state_spec: _StateSpec):
+        """
+        Create an object to change the state of `owner`.
+
+        :param owner: any object which contains a ``state`` method
+
+        :param state_spec: a state spec, whose form depends on
+                           whether `owner` is a Ttk themed widget
+                           or not: if not, either 'normal' or
+                           'disabled'; otherwise, a tuple of one
+                           or more bit flags
+        :type state_spec: str or tuple[str, ...]
+        """
         self.owner = owner
         self.state_spec = state_spec
         self.old_state: _StateSpec = ()

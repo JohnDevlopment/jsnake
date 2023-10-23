@@ -1,13 +1,13 @@
 from __future__ import annotations
 from tkinter import ttk
 import tkinter as tk
-from typing import Any, Literal, cast, Protocol, Type, TypeVar
+from typing import Any, Literal, cast, Protocol, Type
 from typing import TYPE_CHECKING
 
-T_co = TypeVar("T_co", contravariant=True)
-
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any
+
+    _StringDict = dict[str, Any]
 
 # Type checker helpers
 #
@@ -28,7 +28,7 @@ class _ResourceManager:
     __slots__ = ('resources',)
 
     def __init__(self, **kw: Any):
-        self.resources: dict[str, Any] = {k: v for k, v in kw.items()}
+        self.resources: _StringDict = {k: v for k, v in kw.items()}
 
     def __getitem__(self, key: str, /) -> Any:
         return self.resources[key]
@@ -82,24 +82,29 @@ class StringVar(Variable):
         return str(value)
 
 class _WidgetMixin: # pyright: ignore
-    @classmethod
-    def override_init_docstring(cls, parent: Type[tk.Widget]) -> None:
-        import re
-        parent_doc = cast(str, parent.__init__.__doc__)
-        new_doc = parent_doc + cast(str, cls.__init__.__doc__)
-        m = re.search(r'a[ ]*(.*?widget)', r'an extended \1')
-        if m is not None:
-            pass
-        # new_doc = re.sub(r'a[ ]*(.*?widget)', r'an extended \1', new_doc)
-        cls.__init__.__doc__ = new_doc
+    # @classmethod
+    # def override_init_docstring(cls, parent: Type[tk.Widget]) -> None:
+    #     import re
+    #     parent_doc = cast(str, parent.__init__.__doc__)
+    #     new_doc = parent_doc + cast(str, cls.__init__.__doc__)
+    #     m = re.search(r'a[ ]*(.*?widget)', r'an extended \1')
+    #     if m is not None:
+    #         pass
+    #     # new_doc = re.sub(r'a[ ]*(.*?widget)', r'an extended \1', new_doc)
+    #     cls.__init__.__doc__ = new_doc
 
     def override_geomtry_methods(self, cls: Type[tk.Widget]) -> None:
+        """
+        Overrides self's geometry methods to point to its parent's.
+
+        The parent of this widget shall be the frame (self.frame).
+        """
         frame: ttk.Frame = getattr(self, 'frame')
 
         # HACK: Copy geometry methods of self.frame without overriding other methods
-        entry_methods = vars(cls).keys()
+        widget_methods = vars(cls).keys()
         methods = vars(tk.Pack).keys() | vars(tk.Grid).keys() | vars(tk.Place).keys()
-        methods = methods.difference(entry_methods)
+        methods = methods.difference(widget_methods)
 
         for m in methods:
             if m [0] != "_" and m not in ("config", "configure"):
@@ -109,39 +114,56 @@ class _WidgetMixin: # pyright: ignore
         return self.frame.__str__() # pyright: ignore
 
     # Resource functions
+    #
 
     def set_custom_resources(self, **kw: Any) -> None:
+        """Set custom resources in the resource manager."""
         self.__options = _ResourceManager(**kw)
 
-    def set_custom_resource(self, key: str, value: Any) -> None:
-        self.__options[key] = value
+    def set_custom_resource(self, name: str, value: Any) -> None:
+        """Set the resource NAME to VALUE."""
+        self.__options[name] = value
 
-    def get_custom_resource(self, key: str) -> Any:
-        return self.__options[key]
+    def get_custom_resource(self, name: str) -> Any:
+        """Get the resource associated with NAME."""
+        return self.__options[name]
 
-    def resource_defined(self, key: str) -> bool:
-        # Return true if KEY is defined in self._options
-        return key in self.__options
+    def resource_defined(self, name: str) -> bool:
+        """Return true if NAME is defined in self._options"""
+        return name in self.__options
+
+    # Metadata functions
+    #
+
+    def __check_metatable_exists(self):
+        try:
+            temp = self.__metadata # pyright: ignore
+        except:
+            self.__metadata: _StringDict = {}
 
     def set_meta(self, key: str, value: Any) -> None:
         """Set the meta field KEY to VALUE."""
-        if not hasattr(self, '_metadata'):
-            self._metadata: dict[str, Any] = {}
+        # if not hasattr(self, '__metadata'):
+        #     self.__metadata: _StringDict = {}
+
+        self.__check_metatable_exists()
 
         if not isinstance(key, str):
             raise TypeError("key must be a string")
 
-        self._metadata[key] = value
+        self.__metadata[key] = value
 
     def get_meta(self, key: str, default: Any=None) -> Any:
         """Get the meta field KEY, or DEFAULT if it does not exist."""
-        if not hasattr(self, '_metadata'):
-            self._metadata: dict[str, Any] = {}
+        # if not hasattr(self, '__metadata'):
+        #     self.__metadata: _StringDict = {}
+
+        self.__check_metatable_exists()
 
         if not isinstance(key, str):
             raise TypeError("key must be a string")
 
-        return self._metadata.get(key, default)
+        return self.__metadata.get(key, default)
 
 class TkBusyCommand(tk.Widget):
     """A class representing "tk busy" command.
@@ -215,22 +237,3 @@ class InState:
 
     def __exit__(self, exc_type, exc_value, traceback): # pyright: ignore
         self.owner.state(self.old_state)
-
-class SupportsRichComparisons(Protocol[T_co]):
-    def __eq__(self, other: T_co) -> bool:
-        ...
-
-    def __ne__(self, other: T_co) -> bool:
-        ...
-
-    def __lt__(self, other: T_co) -> bool:
-        ...
-
-    def __le__(self, other: T_co) -> bool:
-        ...
-
-    def __gt__(self, other: T_co) -> bool:
-        ...
-
-    def __ge__(self, other: T_co) -> bool:
-        ...

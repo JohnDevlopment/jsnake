@@ -65,7 +65,9 @@ class signal:
 
         :param \*\*kw: Keyword arguments that get bound to `func`
 
-        :raises TypeError: If `func` is not callable
+        :raises TypeError: if `func` is not callable
+        :raises ValueError: if called twice with the same `func`,
+                            `\*binds`, and `\*\*kwargs` are
 
         .. _signal-function:
 
@@ -88,6 +90,10 @@ class signal:
             raise TypeError("First argument must be a function")
 
         bind = self._form_signal_bind(func, *binds, **kw)
+        if bind in self._observers:
+            # Error if duplicate binds
+            raise ValueError("Already connected this signal to this function with the specified binds")
+
         self._observers.append(bind)
 
     def disconnect(self, func, *binds, **kw):

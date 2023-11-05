@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 from typing import cast, Literal, Any
-from .errors import ConstantError
 import os, re
 
 _SizeUnit = Literal['b', 'kb', 'mb', 'gb']
@@ -180,6 +179,9 @@ class attr_dict(dict[str, Any]):
     def __setattr__(self, key: str, value) -> None:
         self.__raise_if_not_string(key)
         self[key] = value
+
+class ConstantError(RuntimeError):
+    """Value cannot be changed."""
 
 class readonly_dict(dict[str, Any]):
     """

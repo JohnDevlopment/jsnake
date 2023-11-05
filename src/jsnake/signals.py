@@ -7,9 +7,6 @@ class _signal_function(Protocol):
     def __call__(self, obj: object, *args: Any, **kw: Any) -> None:
         ...
 
-class InvalidSignalError(RuntimeError):
-    """Invalid signal."""
-
 class signal:
     """Implements the observer pattern."""
 

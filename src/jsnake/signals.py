@@ -7,7 +7,6 @@ class _signal_function(Protocol):
     def __call__(self, obj: object, *args: Any, **kw: Any) -> None:
         ...
 
-# TODO: Remove this class
 class InvalidSignalError(RuntimeError):
     """Invalid signal."""
 
@@ -92,7 +91,6 @@ class signal:
             raise TypeError("First argument must be a function")
 
         bind = self._form_signal_bind(func, *binds, **kw)
-        # TODO: Error if bind is already defined
         self._observers.append(bind)
 
     def disconnect(self, func, *binds, **kw):
@@ -114,7 +112,6 @@ class signal:
 
     @staticmethod
     def _is_signal_bind(arg):
-        # TODO: Make this check more thorough
         return isinstance(arg, tuple)
 
     def emit(self, *args, **kw):

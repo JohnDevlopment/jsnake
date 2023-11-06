@@ -1,7 +1,7 @@
 from __future__ import annotations
 from tkinter import ttk
-from .utils import _WidgetMixin
 from ..signals import signal
+from . import _WidgetMixin
 from typing import TYPE_CHECKING
 import tkinter as tk, sys
 

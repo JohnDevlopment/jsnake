@@ -114,8 +114,17 @@ class signal:
         self._observers.remove(bind)
 
     @staticmethod
-    def _is_signal_bind(arg):
-        return isinstance(arg, tuple)
+    def _is_signal_bind(arg) -> bool:
+        def _is_str_any_dict(arg):
+            return map(lambda x: isinstance(str, x), arg.keys())
+
+        match arg:
+            case (fn, args, kw):
+                return isinstance(arg, tuple) and \
+                       isinstance(kw, dict) and \
+                       all(_is_str_any_dict(kw))
+
+        return False
 
     def emit(self, *args, **kw):
         """

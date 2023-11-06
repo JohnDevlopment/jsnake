@@ -1,0 +1,56 @@
+#+TODO: TODO(t!) fIXME(f!) | DONE(d@) CANCELLED(c@)
+
+* DONE src/jsnake/errors.py
+  :LOGBOOK:
+  CLOCK: [2023-11-05 Sun 17:01]--[2023-11-05 Sun 17:10] =>  0:09
+  :END:
+  - State "DONE"       from "TODO"       [2023-11-05 Sun 17:10]
+  - State "TODO"       from              [2023-11-05 Sun 17:02]
+
+[[file:src/jsnake/errors.py][Link]]
+
+- [-] Audit ~ErrorEnum~ and see if it is really useful
+  - [ ] Yes
+  - [X] No
+- [-] Audit ~Result~ and see if it is really useful
+  - [ ] Yes
+  - [X] No
+- [X] Remove ~EnvError~
+- [X] Move ~ConstantError~ to utils.py
+- [X] Remove ~InvalidSignal~
+
+* DONE src/jsnake/signals.py
+  - State "DONE"       from "TODO"       [2023-11-05 Sun 17:53]
+  - State "TODO"       from              [2023-11-05 Sun 17:12]
+  :LOGBOOK:
+  CLOCK: [2023-11-05 Sun 17:42]--[2023-11-05 Sun 17:53] =>  0:11
+  CLOCK: [2023-11-05 Sun 17:12]--[2023-11-05 Sun 17:39] =>  0:27
+  :END:
+
+[[file:src/jsnake/signals.py][Link]]
+
+- [X] Remove ~InvalidSignalError~
+
+- [X] Class ~signal~
+  - [X] Method ~connect~
+    - [X] Error if bind is already defined
+  - [X] Method ~_is_signal_bind~
+    - [X] Make this check more thorough
+
+* DONE src/jsnake/interface/__init__.py
+  - State "DONE"       from "TODO"       [2023-11-05 Sun 18:17]
+  - State "TODO"       from              [2023-11-05 Sun 18:05]
+  :LOGBOOK:
+  CLOCK: [2023-11-05 Sun 18:05]--[2023-11-05 Sun 18:17] =>  0:12
+  :END:
+
+[[file:src/jsnake/interface/__init__.py][Link]]
+
+- [-] Is ~_Column~ used in other places?
+  - [ ] Yes
+  - [ ] No
+  - [X] unknown
+- [-] Can be ~_StateSpec~ be put in ~TYPE_CHECKING~?
+  - [X] Yes
+  - [ ] No
+- [X] Move all type aliases into a separate module

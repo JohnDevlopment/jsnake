@@ -1,23 +1,13 @@
 from __future__ import annotations
 from tkinter import ttk
 import tkinter as tk
-from typing import Any, Literal, cast, Protocol, Type
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Type
+    from .types import _Widget, _StateSpec, _SupportsStateMethods
 
     _StringDict = dict[str, Any]
-
-# Type checker helpers
-#
-
-_Column = tuple[str, str, int] # pyright: ignore
-_Widget = tk.Widget | None
-_StateSpec = Literal['normal', 'disabled'] | tuple[str, ...]
-
-class _SupportsStateMethods(Protocol):
-    def state(self, *args) -> Any: ...
 
 # Classes
 #

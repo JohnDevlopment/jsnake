@@ -2,6 +2,9 @@ from typing import Literal, Any
 from typing import Any, NoReturn
 from typing_extensions import Self
 
+class ConstantError(RuntimeError):
+    ...
+
 class Filesize:
     size: float
     unit: Literal['b', 'kb', 'mb', 'gb']
@@ -26,12 +29,12 @@ class attr_dict(dict[str, Any]):
     def __setattr__(self, key: str, value) -> None:
         ...
 
-def binary_search(array: list[Any], pattern: Any) -> int:
-    ...
-
 class readonly_dict(dict[str, Any]):
     def __setitem__(self, key, value) -> NoReturn: # pyright: ignore
         ...
+
+def binary_search(array: list[Any], pattern: Any) -> int:
+    ...
 
 def get_env(envname: str) -> str | None:
     ...

@@ -103,15 +103,17 @@ class ExEntry(ttk.Entry, _WidgetMixin):
 
         super().configure(kw)
 
+    def config(self, *, scrollx: bool | None=None,
+               clearbutton: bool | None=None,
+               label: str | None=None, **kw: Any):
+        return self.configure(scrollx=scrollx, clearbutton=clearbutton,
+                              label=label, **kw)
+
     def cget(self, key: str) -> Any:
         if self.resource_defined(key):
             return self.get_custom_resource(key)
 
         return super().cget(key)
-
-    def config(self, *, scrollx: bool | None=None,
-                  label: str | None=None, **kw: Any):
-        return self.configure(scrollx=scrollx, label=label, **kw)
 
     def __validate_entry(self,
                          reason: Literal['focusin', 'focusout', 'key', 'forced'],

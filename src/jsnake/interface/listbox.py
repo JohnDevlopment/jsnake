@@ -302,7 +302,3 @@ class ExListbox(tk.Listbox, _WidgetMixin):
 
 #     def __str__(self) -> str:
 #         return str(self.frame)
-
-if __name__ == "__main__":
-    from .test_listbox import run_test
-    run_test()

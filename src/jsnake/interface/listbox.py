@@ -1,6 +1,6 @@
 from __future__ import annotations
 from tkinter import ttk
-from .utils import _WidgetMixin
+from . import _WidgetMixin
 from ..signals import signal
 from typing import TYPE_CHECKING
 import tkinter as tk, sys
@@ -16,8 +16,6 @@ if TYPE_CHECKING:
 class ExListbox(tk.Listbox, _WidgetMixin):
     """Extended entry widget."""
 
-    __slots__ = ()
-
     def __init__(self, master: _Widget=None, *, scrolly: bool=False, **kw: Any):
         """
         Construct an extended listbox widget with the parent `master`.
@@ -25,12 +23,35 @@ class ExListbox(tk.Listbox, _WidgetMixin):
         :param master: The parent window. If ``None``, defaults to the root window
 
         :keyword bool scrolly: If true, a vertical scrollbar is added
+
+        :keyword **kw: Arguments forwarded to :py:class:`tkinter.Listbox`
         """
+        # Signals
+        #: | ``on_item_selected(item: str | float)``
+        #: Emitted when a single item is selected.
+        self.on_item_selected = signal('item_selected', self)
+
+        #: | ``on_items_selected(items: Sequence[str | float])``
+        #: Emitted when multiple items are selected.
+        self.on_items_selected = signal('items_selected', self)
+
+        #: | ``on_values_set(values: Sequence[str | float])``
+        #: Emitted when values are set via :py:meth:`set_values`.
+        self.on_values_set = signal('values_set', self)
+
+        #: | ``on_values_set(enabled: bool)``
+        #: Emitted when the state of the vertical scrollbar is changed.
+        #: `enabled` indicates whether the scrollbar is visible and can be used.
+        self.on_y_scrollbar_changed = signal('y_scrollbar_changed', self)
+        self.on_y_scrollbar_changed.connect(self._on_y_scrollbar_changed)
+
         # Frame this enter goes inside
         self.frame = ttk.Frame(master)
 
-        # X scrollbar
-        self.ybar = ttk.Scrollbar(self.frame, orient=tk.VERTICAL, command=self.xview)
+        # Y scrollbar
+        self.ybar = ttk.Scrollbar(self.frame, orient=tk.VERTICAL, command=self.yview)
+
+        kw['yscrollcommand'] = self.ybar.set
 
         super().__init__(self.frame, **kw)
 
@@ -38,23 +59,36 @@ class ExListbox(tk.Listbox, _WidgetMixin):
 
         self.pack(fill=tk.BOTH)
 
-        self.override_geomtry_methods(tk.Listbox)
+        # Emit signals
+        self.on_item_selected.emit("")
+        self.on_items_selected.emit(["", ""])
+        self.on_values_set.emit([])
+        self.on_y_scrollbar_changed.emit(scrolly)
 
-        # Signals
-        self.on_item_selected = signal('item_selected', self)
-        self.on_items_selected = signal('items_selected', self)
-        self.on_values_set = signal('values_set', self)
+        self.override_geomtry_methods(tk.Listbox)
 
         # Bindings
         def _listbox_selected(event: tk.Event): # pyright: ignore
             sel = self.curselection()
+            if len(sel) == 0: return
+
             if len(sel) == 1:
                 self.on_item_selected.emit(sel[0])
-                return
-
-            self.on_items_selected.emit(sel)
+            else:
+                self.on_items_selected.emit(sel)
 
         self.bind("<<ListboxSelect>>", _listbox_selected, True)
+
+    def configure(self, scrolly: bool | None=None, **kw: Any):
+        if scrolly is not None:
+            self.set_custom_resource('scrolly', scrolly)
+            self.on_y_scrollbar_changed.emit(scrolly)
+        super().configure(kw)
+
+    def cget(self, key: str) -> Any:
+        if self.resource_defined(key):
+            return self.get_custom_resource(key)
+        return super().cget(key)
 
     @property
     def size(self) -> int:
@@ -155,150 +189,17 @@ class ExListbox(tk.Listbox, _WidgetMixin):
         if len(values) > 1:
             self.set_values(sorted(values, key=key, reverse=reverse))
 
-    ###
+    # Signal handlers
+    #
 
-    # def configure(self, **kw: Any):
-    #     super().configure(kw)
+    def _on_y_scrollbar_changed(self, obj: object, enabled: bool, **kw) -> None:
+        if enabled:
+            if not self.ybar.winfo_ismapped():
+                # Map the scrollbar if it isn't already
+                self.ybar.pack(side=tk.RIGHT, fill=tk.Y, before=self)
 
-    # def cget(self, key: str) -> Any:
-    #     if self.resource_defined(key):
-    #         return self.get_custom_resource(key)
+            return
 
-    #     return super().cget(key)
-
-# class ExListbox(Listbox, _ExWidgetMixin):
-#     """A Listbox but with extra features."""
-
-#     __slots__ = ()
-
-#     isttk = False
-
-#     def __init__(self, master=None, cnf={}, **kw):
-#         extraOpts, cnf, kw = self.parse_extra_options(cnf, kw, 'values')
-#         Listbox.__init__(self, master, cnf, **kw)
-#         values = extraOpts.get('values', [])
-#         if len(values):
-#             oldState = self.cget('state')
-#             self.config(state=NORMAL)
-#             self.insert(END, *values)
-#             self.config(state=oldState)
-
-#     def clear(self):
-#         """Clears the listbox."""
-#         self.delete(0, END)
-
-#     def curselection(self):
-#         """
-#         Return the indices of currently selected item.
-
-#         If the selection is clear, then None is returned.
-#         Otherwise the value returned depends on the 'selectmode'
-#         option: if set to 'browse', it is a single integer;
-#         if not set to 'browse' it is a tuple containing one or more indices.
-#         """
-#         sel = super().curselection()
-#         if len(sel) == 0: return None
-
-#         if self.cget('selectmode') == 'browse':
-#             return sel[0]
-
-#         return sel
-
-#     def search(self, pattern: str):
-#         """
-#         Searches the listbox for an item matching PATTERN.
-
-#         Internally, one of two search algorithms is used: for
-#         a list of 15 or less items, a linear array search is done;
-#         but for lists with over 15 items, a binary search is done instead.
-#         """
-#         values: list = list(self.get(0, END))
-
-#         if len(values) >= 15:
-#             return binary_search(values, pattern)
-
-#         res = -1
-#         i = k_counter(0)
-#         for val in values:
-#             if val == pattern:
-#                 res = i.value
-#                 break
-#             +i
-
-#         return res
-
-#     def select(self, first, see=True):
-#         """
-#         Selects the item at index FIRST.
-
-#         This is effectively the same as selecting an item with
-#         the mouse. As such, the <<ListboxSelect>> event is generated.
-#         """
-#         self.tk.call('::tk::ListboxBeginSelect', self._w, self.index(first), 1)
-#         self.tk.call('::tk::CancelRepeat')
-#         self.activate(first)
-#         if see:
-#             self.see(first)
-
-#     def set_values(self, values: list, /):
-#         """Replace the listbox items with those in VALUES."""
-#         self.clear()
-#         self.insert(END, *values)
-#         self.update()
-
-#     def sort(self, *, key=None, reverse=False):
-#         """
-#         Sorts the elements of the listbox.
-
-#         Internally, list.sort() is used to sort the elements,
-#         KEY and REVERSE being passed to it.
-#         """
-#         vals = list(self.get(0, END))
-#         assert isinstance(vals, list), f"not list, is {type(vals)}"
-#         if len(vals) > 1:
-#             self.set_values(sorted(vals, key=key, reverse=reverse))
-
-#     ## Properties
-
-#     @property
-#     def size(self) -> int:
-#         """Number of items."""
-#         l = self.get(0, END)
-#         assert isinstance(l, (list,tuple)), type(l)
-#         return len(l)
-
-# # Compound widgets
-
-# class ScrolledListbox(ExListbox):
-#     """
-#     A scrolled listbox megawidget.
-#     """
-
-#     __slots__ = ('frame', 'vbar')
-
-#     def __init__(self, master, **kw):
-#         """
-#         Construct a scrolled listbox with a scroll direction.
-
-#         *ARGS and **KW are forwarded to the underlying ExListbox.
-#         """
-#         self.frame = ttk.Frame(master)
-#         self.vbar = ttk.Scrollbar(self.frame, orient='vertical')
-#         self.vbar.pack(side=RIGHT, fill=Y)
-
-#         kw.update({'yscrollcommand': self.vbar.set})
-#         super().__init__(self.frame, **kw)
-#         self.pack(side=LEFT, fill=BOTH, expand=True)
-#         self.vbar.config(command=self.yview)
-
-#         # HACK: Copy geometry methods of self.frame without overriding Listbox methods
-#         lb_meths = vars(ExListbox).keys()
-#         methods = vars(Pack).keys() | vars(Grid).keys() | vars(Place).keys()
-#         methods = methods.difference(lb_meths)
-
-#         for m in methods:
-#             if m[0] != '_' and m != 'config' and m != 'configure':
-#                 setattr(self, m, getattr(self.frame, m))
-
-#     def __str__(self) -> str:
-#         return str(self.frame)
+        if self.ybar.winfo_ismapped():
+            # Disabled; the scrollbar is visible, so unmap it
+            self.ybar.pack_forget()

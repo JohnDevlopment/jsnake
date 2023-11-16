@@ -156,9 +156,9 @@ class ExEntry(ttk.Entry, _WidgetMixin):
                 self.xbar.grid(row=1, column=1, sticky='ew')
                 return
 
-            if self.xbar.winfo_ismapped():
-                # The scrollbar is visible, so unmap it
-                self.xbar.grid_forget()
+        if self.xbar.winfo_ismapped():
+            # The scrollbar is visible, so unmap it
+            self.xbar.grid_forget()
 
     def _on_clearbutton_changed(self, obj: object, state: bool, **kw):
         clearbutton = self.clearbutton

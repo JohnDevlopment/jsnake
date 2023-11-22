@@ -1,18 +1,9 @@
 """
 Logging module.
 
-.. note:: Before you can start using the other
-   methods, call :py:func:`init`.
-
-This module includes functions for creating and modifying loggers.
-When you first initialize this module via :py:func:`init`, ``jsnake``
-sets the default severity level via the environment. By default,
-:py:func:`init` looks for ``JSNAKE_LEVEL`` in the environment, but you
-can set the prefix "JSNAKE" to something else (see function for details).
-
 .. code-block:: python
 
-   from jsnake.logging import init, get_logger
+   from jsnake.logging import, get_logger
    logger = get_logger('foo')
    logger.info("Info")
    logger.info("My name is %s", "Foo")
@@ -78,35 +69,6 @@ _rootLogger: Logger
 _cache: dict[str, Logger] = {}
 _initialized = False
 
-def init(name, envprefix="JSNAKE"):
-    """
-    Initialize the logging module.
-
-    :param str name: The name of the root logger
-
-    :param str envprefix: The prefix to the environment name used
-                          to get the default logging level
-
-    The default level for loggers is taken from the environment variable
-    ``X_LEVEL``, where ``X`` is the value of `envprefix`. For example,
-    if using the default of "JSNAKE", the environment name used will
-    be ``JSNAKE_LEVEL``.
-
-    .. note::
-       This **must** be called before any other function in this module.
-    """
-    global _rootLogger, _initialized, DEFAULT_LEVEL
-
-    # Get default level
-    DEFAULT_LEVEL = _get_default_level(f"{envprefix}_LEVEL")
-
-    # Set flag
-    _initialized = True
-
-    # Create root logger
-    _rootLogger = logging.getLogger(name)
-    add_handler(_rootLogger, 'null')
-
 def add_handler(logger: Logger, kind: str, **kw):
     """
     Add the specified type of handler to a logger.
@@ -141,9 +103,6 @@ def add_handler(logger: Logger, kind: str, **kw):
     * null
         * No arguments.
     """
-    if not _initialized:
-        raise LoggingError("You must call init() before using any of the other functions.")
-
     hdl = None
     formatter = logging.Formatter(f"%(levelname)s %(name)s: [%(asctime)s] %(message)s")
 
@@ -205,9 +164,6 @@ def get_logger(name="", level=None, stream=True):
     """
     global _cache
 
-    if not _initialized:
-        raise LoggingError("You must call init() before using any of the other functions.")
-
     # Return the root logger if name is "" or "yt_dlp_tk"
     parts = name.split(".")
     isroot = parts[0] == "" and len(parts) == 1
@@ -244,3 +200,9 @@ def get_logger(name="", level=None, stream=True):
     _cache[name] = logger
 
     return logger
+
+if not _initialized:
+    _initialized = True
+
+    # Get default level
+    DEFAULT_LEVEL = _get_default_level("JSNAKE_LEVEL")

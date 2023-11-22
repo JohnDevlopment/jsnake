@@ -171,14 +171,14 @@ def get_logger(name="", level=None, stream=True):
         return _rootLogger
 
     # Insert root name into the array
-    root_name = _rootLogger.name
-    if parts[0] not in ("", root_name):
-        parts.insert(0, root_name)
-    if parts[0] == "":
-        parts[0] = root_name
+    # root_name = _rootLogger.name
+    # if parts[0] not in ("", root_name):
+    #     parts.insert(0, root_name)
+    # if parts[0] == "":
+    #     parts[0] = root_name
 
     # Join list into a string
-    name = ".".join(parts)
+    # name = ".".join(parts)
 
     # Return the cached logger
     if name in _cache:
@@ -203,6 +203,9 @@ def get_logger(name="", level=None, stream=True):
 
 if not _initialized:
     _initialized = True
+
+    _rootLogger = logging.getLogger()
+    # add_handler(_rootLogger, 'null')
 
     # Get default level
     DEFAULT_LEVEL = _get_default_level("JSNAKE_LEVEL")

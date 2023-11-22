@@ -30,9 +30,6 @@ def _get_default_level(envname: str) -> Level:
 DEFAULT_LEVEL: Level
 Logger = logging.Logger
 
-def init(name: str, envprefix: str="JSNAKE") -> None:
-    ...
-
 @overload
 def add_handler(logger: Logger, kind: Literal['stream'], *, stream: _TextWriteIO | None=None) -> None:
     ...

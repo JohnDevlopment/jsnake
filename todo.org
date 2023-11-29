@@ -1,4 +1,4 @@
-#+TODO: TODO(t!) fIXME(f!) | DONE(d@) CANCELLED(c@)
+#+TODO: TODO(t!) fIXME(f!) | DONE(d!) CANCELLED(c@)
 
 * DONE src/jsnake/errors.py
   :LOGBOOK:
@@ -54,3 +54,35 @@
   - [X] Yes
   - [ ] No
 - [X] Move all type aliases into a separate module
+* DONE src/jsnake/interface/dialog.py
+  - State "DONE"       from "TODO"       [2023-11-29 Wed 13:47]
+  - State "TODO"       from "TODO"       [2023-11-29 Wed 12:56]
+  :LOGBOOK:
+  CLOCK: [2023-11-29 Wed 13:41]--[2023-11-29 Wed 13:49] =>  0:08
+  :END:
+
+** DONE Init
+   - State "DONE"       from "TODO"       [2023-11-29 Wed 13:35]
+   - State "TODO"       from "DONE"       [2023-11-29 Wed 13:31]
+   - State "DONE"       from "TODO"       [2023-11-29 Wed 13:30]
+   - State "TODO"       from "TODO"       [2023-11-29 Wed 13:02]
+   :LOGBOOK:
+   CLOCK: [2023-11-29 Wed 13:32]--[2023-11-29 Wed 13:35] =>  0:03
+   CLOCK: [2023-11-29 Wed 13:03]--[2023-11-29 Wed 13:30] =>  0:27
+   :END:
+
+** DONE ok
+   - State "DONE"       from "TODO"       [2023-11-29 Wed 13:40]
+   - State "TODO"       from "DONE"       [2023-11-29 Wed 13:35]
+
+** DONE cancel
+   - State "DONE"       from "TODO"       [2023-11-29 Wed 13:40]
+   - State "TODO"       from              [2023-11-29 Wed 13:36]
+
+** DONE validate
+   - State "DONE"       from "TODO"       [2023-11-29 Wed 13:44]
+   - State "TODO"       from              [2023-11-29 Wed 13:36]
+
+** DONE apply
+   - State "DONE"       from "TODO"       [2023-11-29 Wed 13:47]
+   - State "TODO"       from              [2023-11-29 Wed 13:36]

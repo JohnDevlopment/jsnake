@@ -1,5 +1,8 @@
 from tkinter import Toplevel, Misc, ttk, Event
-from typing import Optional
+from typing import Optional, Callable, TypeAlias, Literal
+
+_MsgboxType: TypeAlias = Literal['abortretryignore', 'ok', 'okcancel', 'retrycancel', 'yesno', 'yesnocancel']
+_MsgBoxCallback: TypeAlias = Callable[[str], None]
 
 class ExDialog(Toplevel):
     def __init__(self, parent: Misc=..., title: str=...) -> None:
@@ -24,4 +27,19 @@ class ExDialog(Toplevel):
         ...
 
     def apply(self) -> None:
+        ...
+
+class ExMessagebox(ExDialog):
+    """Message box."""
+
+    def __init__(self, parent: Misc=..., *,
+                 command: _MsgBoxCallback=...,
+                 default: Literal['abort', 'cancel', 'ignore', 'ok',
+                                  'no', 'retry', 'yes']=...,
+                 details: str=...,
+                 icon: Literal['info', 'error']=...,
+                 message: str=...,
+                 title: str=...,
+                 type: Literal['abortretryignore', 'ok', 'okcancel',
+                               'retrycancel', 'yesno', 'yesnocancel']=...):
         ...

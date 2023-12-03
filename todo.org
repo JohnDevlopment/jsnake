@@ -1,4 +1,5 @@
 #+TODO: TODO(t!) fIXME(f!) | DONE(d!) CANCELLED(c@)
+#+STARTUP: hideblocks
 
 * DONE src/jsnake/errors.py
   :LOGBOOK:
@@ -55,11 +56,31 @@
   - [ ] No
 - [X] Move all type aliases into a separate module
 * DONE src/jsnake/interface/dialog.py
+  - State "DONE"       from "TODO"       [2023-12-02 Sat 05:38]
+  - State "TODO"       from "DONE"       [2023-12-02 Sat 03:54]
+  - State "DONE"       from "TODO"       [2023-12-02 Sat 03:51]
+  - State "TODO"       from "DONE"       [2023-12-02 Sat 02:42]
   - State "DONE"       from "TODO"       [2023-11-29 Wed 13:47]
   - State "TODO"       from "TODO"       [2023-11-29 Wed 12:56]
   :LOGBOOK:
+  CLOCK: [2023-12-02 Sat 05:25]--[2023-12-02 Sat 05:38] =>  0:13
+  CLOCK: [2023-12-02 Sat 04:29]--[2023-12-02 Sat 05:00] =>  0:31
+  CLOCK: [2023-12-02 Sat 03:54]--[2023-12-02 Sat 04:19] =>  0:25
+  CLOCK: [2023-12-02 Sat 03:35]--[2023-12-02 Sat 03:51] =>  0:16
+  CLOCK: [2023-12-02 Sat 03:18]--[2023-12-02 Sat 03:20] =>  0:02
+  CLOCK: [2023-12-02 Sat 02:44]--[2023-12-02 Sat 02:45] =>  0:01
   CLOCK: [2023-11-29 Wed 13:41]--[2023-11-29 Wed 13:49] =>  0:08
   :END:
+
+#+BEGIN: clocktable :scope subtree :maxlevel 2
+#+CAPTION: Clock summary at [2023-12-02 Sat 05:38]
+| Headline                       | Time   |      |
+|--------------------------------+--------+------|
+| *Total time*                   | *2:06* |      |
+|--------------------------------+--------+------|
+| src/jsnake/interface/dialog.py | 2:06   |      |
+| \_  Init                       |        | 0:30 |
+#+END:
 
 ** DONE Init
    - State "DONE"       from "TODO"       [2023-11-29 Wed 13:35]
@@ -86,3 +107,50 @@
 ** DONE apply
    - State "DONE"       from "TODO"       [2023-11-29 Wed 13:47]
    - State "TODO"       from              [2023-11-29 Wed 13:36]
+
+** DONE Message Box
+   - State "DONE"       from "TODO"       [2023-12-02 Sat 05:38]
+   - State "TODO"       from "DONE"       [2023-12-02 Sat 03:53]
+   - State "DONE"       from "TODO"       [2023-12-02 Sat 03:51]
+   - State "TODO"       from              [2023-12-02 Sat 02:43]
+
+   - [X] types (display only) [6/6]
+     - [X] abortretryignore
+     - [X] ok
+     - [X] okcancel
+     - [X] retrycancel
+     - [X] yesno
+     - [X] yesnocancel
+   - [X] functionality [6/6]
+     - [X] abortretryignore [2/2]
+       - [X] blocking
+       - [X] nonblocking
+     - [X] ok [2/2]
+       - [X] blocking
+       - [X] nonblocking
+     - [X] okcancel [2/2]
+       - [X] blocking
+       - [X] nonblocking
+     - [X] retrycancel [2/2]
+       - [X] blocking
+       - [X] nonblocking
+     - [X] yesno [2/2]
+       - [X] blocking
+       - [X] nonblocking
+     - [X] yesnocancel [2/2]
+       - [X] blocking
+       - [X] nonblocking
+
+*** TODO Default
+    - State "TODO"       from "DONE"       [2023-12-02 Sat 05:40]
+
+*** DONE Message
+    - State "DONE"       from "TODO"       [2023-12-03 Sun 11:59]
+    - State "TODO"       from              [2023-12-02 Sat 05:40]
+    :LOGBOOK:
+    CLOCK: [2023-12-03 Sun 09:57]--[2023-12-03 Sun 11:59] =>  2:02
+    :END:
+
+*** DONE Details
+    - State "DONE"       from "TODO"       [2023-12-03 Sun 11:59]
+    - State "TODO"       from              [2023-12-02 Sat 05:40]

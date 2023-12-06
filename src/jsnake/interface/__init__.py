@@ -224,6 +224,55 @@ class _WidgetMixin: # pyright: ignore
 
         return self.__metadata.get(key, default)
 
+class _StateMethods:
+    # @overload
+    # def state(self, state_spec: None=None) -> str:
+    #     ...
+
+    # @overload
+    # def state(self, state_spec: _StateSpec) -> None:
+    #     ...
+
+    def state(self, state_spec=None):
+        """
+        Query or modify the widget state.
+
+        :param state_spec: If provided, specifies a widget
+                           state
+        :type state_spec: tuple or None
+
+        :return: ``None`` if `state_spec` is provided, otherwise
+                 the current state
+        """
+        if state_spec is None:
+            return self.cget('state') # pyright: ignore
+        self.configure(state=state_spec) # pyright: ignore
+
+    def instate(self, state_spec, callback=None, *args, **kw):
+        """
+        Test the widget's state.
+
+        :param state_spec: The widget state
+                           to test for
+        :type state_spec: tuple[str, ...]
+
+        :param function callback: If provided, specifies
+                                  the function to call if
+                                  the current state matches
+                                  `state_spec`. `\*args` and
+                                  `\*\*kw` are passed to the
+                                  function
+
+        :return: ``True`` or ``False`` depending on whether the widget
+                 state matches `state_spec`
+        """
+        test = self.state() == state_spec
+        if callback is None:
+            return test
+
+        if test:
+            callback(*args, **kw)
+
 class TkBusyCommand(tk.Widget):
     """
     A class representing "tk busy" command.

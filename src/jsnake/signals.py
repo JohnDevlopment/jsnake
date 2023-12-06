@@ -116,7 +116,7 @@ class signal:
     @staticmethod
     def _is_signal_bind(arg) -> bool:
         def _is_str_any_dict(arg):
-            return map(lambda x: isinstance(str, x), arg.keys())
+            return map(lambda x: isinstance(x, str), arg.keys())
 
         match arg:
             case (fn, args, kw):

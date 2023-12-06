@@ -1,6 +1,7 @@
 from __future__ import annotations
 from tkinter import ttk
 import tkinter as tk
+from _tkinter import TkappType
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -67,6 +68,44 @@ class Variable(tk.Variable):
     def tk(self):
         master: tk.Widget = self._root # pyright: ignore
         return master.tk
+
+class BooleanVar(Variable):
+    """Value holder for boolean variables."""
+
+    _default = False
+
+    def __init__(self, master=None, value=None,
+                 name=None, temp=False):
+        """
+        Construct a boolean variable.
+
+        :param master: see :paramref:`Variable.master`
+
+        :param value: see :paramref:`Variable.value`.
+                      Defaults to ``False``
+
+        :param name: see :paramref:`Variable.name`
+
+        :param temp: see :paramref:`Variable.temp`
+        """
+        super().__init__(master, value, name, temp)
+
+    def get(self):
+        """Return value of variable as string."""
+        tk: TkappType = self.tk
+        return tk.getboolean(super().get())
+
+    def set(self, value):
+        """
+        Set the variable to `value`.
+
+        :param Any value: Any value that is understood
+                          by Tcl as a boolean
+        """
+        tk: TkappType = self.tk
+        return super().set(tk.getboolean(value))
+
+    initialize = set
 
 class StringVar(Variable):
     """

@@ -1,12 +1,11 @@
 from __future__ import annotations
 from tkinter import ttk
-import tkinter as tk
 from _tkinter import TkappType
 from typing import TYPE_CHECKING
+import tkinter as tk
 
 if TYPE_CHECKING:
     from typing import Any, Type
-    from .types import _Widget, _StateSpec, _SupportsStateMethods
 
     _StringDict = dict[str, Any]
 
@@ -36,14 +35,13 @@ class Variable(tk.Variable):
        Instead, use one of its subclasses.
     """
 
-    def __init__(self, master: _Widget=None, value: Any=None,
-                 name: str | None=None, temp: bool=False):
+    def __init__(self, master=None, value=None, name=None, temp=False):
         """
         Initialize the variable.
 
         :param master: the widget's master. If ``None``,
                        use the root
-        :type master: widget or None
+        :type master: tk.Misc or None
 
         :param Any value: the variable's initial value
 
@@ -66,7 +64,7 @@ class Variable(tk.Variable):
 
     @property
     def tk(self):
-        master: tk.Widget = self._root # pyright: ignore
+        master = self._root # pyright: ignore
         return master.tk
 
 class BooleanVar(Variable):
@@ -116,8 +114,7 @@ class StringVar(Variable):
     some string
     """
 
-    def __init__(self, master: _Widget=None, value: Any=None,
-                 name: str | None=None, temp: bool=False):
+    def __init__(self, master=None, value=None, name=None, temp=False):
         """
         Construct a string variable.
 
@@ -141,17 +138,6 @@ class StringVar(Variable):
         return str(value)
 
 class _WidgetMixin: # pyright: ignore
-    # @classmethod
-    # def override_init_docstring(cls, parent: Type[tk.Widget]) -> None:
-    #     import re
-    #     parent_doc = cast(str, parent.__init__.__doc__)
-    #     new_doc = parent_doc + cast(str, cls.__init__.__doc__)
-    #     m = re.search(r'a[ ]*(.*?widget)', r'an extended \1')
-    #     if m is not None:
-    #         pass
-    #     # new_doc = re.sub(r'a[ ]*(.*?widget)', r'an extended \1', new_doc)
-    #     cls.__init__.__doc__ = new_doc
-
     def override_geomtry_methods(self, cls: Type[tk.Widget]) -> None:
         """
         Overrides self's geometry methods to point to its parent's.
@@ -277,13 +263,14 @@ class TkBusyCommand(tk.Widget):
     """
     A class representing "tk busy" command.
 
-    Call :py:meth:`hold` to mark a window as busy, and :py:meth:`forget` to unmark it.
+    Call :py:meth:`hold` to mark a window as busy, and :py:meth:`forget` to unmark
+    it.
 
-    This class can be instantiated in a ``with`` statement: the window's busy status
-    will be handled automatically.
+    This class can be used as a context manager. In that case, the window's busy
+    status is handled automatically.
     """
 
-    def __init__(self, master: tk.Widget, window: tk.Widget, /):
+    def __init__(self, master, window, /):
         """
         Construct a TkBusyCommand object.
 
@@ -334,7 +321,7 @@ class InState:
            ...
     """
 
-    def __init__(self, owner: _SupportsStateMethods, state_spec: _StateSpec):
+    def __init__(self, owner, state_spec):
         """
         Create an object to change the state of `owner`.
 
@@ -349,7 +336,7 @@ class InState:
         """
         self.owner = owner
         self.state_spec = state_spec
-        self.old_state: _StateSpec = ()
+        self.old_state = ()
 
         if state_spec in ['normal', 'disabled']:
             self.old_state = 'normal' if state_spec == 'disabled' else 'disabled'
@@ -364,6 +351,7 @@ class InState:
 
     def __enter__(self):
         self.owner.state(self.state_spec)
+        return self
 
-    def __exit__(self, exc_type, exc_value, traceback): # pyright: ignore
+    def __exit__(self, *args):
         self.owner.state(self.old_state)

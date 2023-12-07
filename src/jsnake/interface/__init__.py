@@ -211,14 +211,6 @@ class _WidgetMixin: # pyright: ignore
         return self.__metadata.get(key, default)
 
 class _StateMethods:
-    # @overload
-    # def state(self, state_spec: None=None) -> str:
-    #     ...
-
-    # @overload
-    # def state(self, state_spec: _StateSpec) -> None:
-    #     ...
-
     def state(self, state_spec=None):
         """
         Query or modify the widget state.
